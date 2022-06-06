@@ -10,17 +10,23 @@
 #include <sio_message.h>
 #include <sio_socket.h>
 
-char* WINDOW_TITLE = "Oshi";
-int WIDTH = 500;
-int HEIGHT = 500;
-std::string curUser;
-int curUserPos;
-Character connectedUsers[3];
 int connectedUsersSize = 0;
 int fontSize = 40;
 int currentUsersOnServer;
+int mousePosX;
+int mousePosY;
+int curUserPosInArray;
+int WIDTH = 500;
+int HEIGHT = 500;
 bool connected = false;
 bool sentInitial = false;
+char* WINDOW_TITLE = "Oshi";
+std::string curUser;
+Character connectedUsers[3];
+SDL_Color White = { 255, 255, 255 };
+SDL_Event event;
+Game gameObject(WIDTH, HEIGHT);
+sio::client client;
 
 void onEnter(sio::event& e) {
     std::string u = e.get_message()->get_map()["user"]->get_string();
@@ -29,13 +35,47 @@ void onEnter(sio::event& e) {
     connected = true;
 }
 
+void gameTick(sio::event& e) {
+    sio::message::list user;
+    user.push(sio::string_message::create(std::to_string(mousePosX)));
+    user.push(sio::string_message::create(std::to_string(mousePosY)));
+    client.socket()->emit("user_update", user);
+    int checkCurrentUsersOnServer = e.get_message()->get_vector().size();
+    if (checkCurrentUsersOnServer != currentUsersOnServer) {
+        currentUsersOnServer = checkCurrentUsersOnServer;
+    }
+
+    for (int i = 0; i < checkCurrentUsersOnServer; i++) {
+        std::string user = e.get_message()->get_vector()[i]->get_map()["user"]->get_string();
+        std::string x = e.get_message()->get_vector()[i]->get_map()["x"]->get_string();
+        std::string y = e.get_message()->get_vector()[i]->get_map()["y"]->get_string();
+        if (user == curUser) {
+            curUserPosInArray = i;
+            connectedUsers[i] = Character(gameObject.renderer);
+            connectedUsers[i].isPlayer == true;
+            connectedUsers[i].move(std::stoi(x), std::stoi(y));
+        }
+        else {
+            connectedUsers[i] = Character(gameObject.renderer);
+            connectedUsers[i].move(std::stoi(x), std::stoi(y));
+        }
+    }
+}
+
 int main(int argc, char* argv[]) {
-    
-    int mousePosX;
-    int mousePosY;
-    Game gameObject(WIDTH, HEIGHT);
     gameObject.setTitle(WINDOW_TITLE);
-    sio::client client;
+    int TTF_Engine = TTF_Init();
+    if (!TTF_Engine) {
+        printf("Could not init TTF Engine");
+    }
+
+    TTF_Font* font = TTF_OpenFont("assets/font/font.ttf", fontSize);
+    if (!font) {
+        printf("Could not open font file");
+    }
+
+    
+    
     client.connect("http://rpg.json.scot");
     client.socket()->emit("user_wants_connection");
     client.socket()->on("user_got_connected", &onEnter);
@@ -59,48 +99,10 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    client.socket()->on("game_tick", [&](sio::event& e) {
-        sio::message::list user;
-        user.push(sio::string_message::create(std::to_string(mousePosX)));
-        user.push(sio::string_message::create(std::to_string(mousePosY)));
-        client.socket()->emit("user_update", user);
-        int checkCurrentUsersOnServer = e.get_message()->get_vector().size();
-        if (checkCurrentUsersOnServer != currentUsersOnServer) {
-            currentUsersOnServer = checkCurrentUsersOnServer;
-        }
-
-        for (int i = 0; i < checkCurrentUsersOnServer; i++) {
-            std::string user = e.get_message()->get_vector()[i]->get_map()["user"]->get_string();
-            std::string x = e.get_message()->get_vector()[i]->get_map()["x"]->get_string();
-            std::string y = e.get_message()->get_vector()[i]->get_map()["y"]->get_string();
-            if (user == curUser) {
-                curUserPos = i;
-                connectedUsers[i] = Character(gameObject.renderer);
-                connectedUsers[i].isPlayer == true;
-                connectedUsers[i].move(std::stoi(x), std::stoi(y));
-            }
-            else {
-                connectedUsers[i] = Character(gameObject.renderer);
-                connectedUsers[i].move(std::stoi(x), std::stoi(y));
-            }
-        }
-     });
-   
-
-    SDL_Event event;
-    TTF_Init();
-
-    
-    TTF_Font* font = TTF_OpenFont("assets/font/font.ttf", fontSize);
-    if (!font) {
-        printf("Could not open font file");
-    }
-
-    
+    client.socket()->on("game_tick", &gameTick);
 
     bool running = true;
-    SDL_Color White = { 255, 255, 255 };
-
+    
     while (running) {
         while (SDL_PollEvent(&event))
         {
@@ -141,8 +143,8 @@ int main(int argc, char* argv[]) {
         Message_rect.w = strlen(text.c_str()) * 10 + fontSize; // controls the width of the rect
         Message_rect.h = fontSize; // controls the height of the rect
 
-        connectedUsers[curUserPos].move(mousePosX, mousePosY);
-        connectedUsers[curUserPos].draw();
+        connectedUsers[curUserPosInArray].move(mousePosX, mousePosY);
+        connectedUsers[curUserPosInArray].draw();
 
         for (int i = 0; i < currentUsersOnServer; i++) {
             if (!connectedUsers[i].isPlayer) {
