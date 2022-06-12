@@ -168,9 +168,20 @@ void gameLoop() {
 void physLoop() {
     while (running) {
         //printf("Physics Update\n");
-        std::cout << "X: " << player.x << "Y: " << player.y << std::endl;
+        //std::cout << "X: " << player.x << "Y: " << player.y << std::endl;
         
         SDL_Delay(15);
+    }
+}
+
+void gameTick(sio::event& evnt) {
+    int playerChunkSize = evnt.get_message()->get_vector().size();
+    
+    for (int ii = 0; ii < playerChunkSize; ii++) {
+        std::string user = evnt.get_message()->get_vector()[ii]->get_map()["socketid"]->get_string();
+        double x = evnt.get_message()->get_vector()[ii]->get_map()["x"]->get_double();
+        double y = evnt.get_message()->get_vector()[ii]->get_map()["y"]->get_double();
+        std::cout << user << " @ X:" << x << " Y: " << y << std::endl;
     }
 }
 
@@ -188,6 +199,7 @@ int main(int argc, char* argv[]) {
     client.connect(SERVER_HOST);
     client.socket()->emit("user_wants_connection");
     client.socket()->on("user_got_connected", &onEnter);
+    client.socket()->on("game_tick", &gameTick);
     SDL_Delay(2000);
     
     auto physicsLoop = std::async(std::launch::async, physLoop);
