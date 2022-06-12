@@ -1,218 +1,207 @@
-﻿#include <fstream>
-#include <iostream>
-#include <stdio.h>
-#include <iostream>
 #include <string>
-#include <stdbool.h>
 #include <SDL.h>
+#include <SDL_image.h>
 #include <SDL_ttf.h>
-#include "include/audio.c"
-#include "include/audio.h"
+#include <algorithm>
+#include <iostream>
+#include <future>
+#include "game.cpp"
+#include "character.cpp"
+#include <sio_client.h>
+#include <sio_message.h>
+#include <sio_socket.h>
 
-#define WINDOW_TITLE "Holy shit, its a game written in C!"
-#define WIDTH 1920
-#define HEIGHT 1080
-#define SIZE 50
-#define SPEED 500
-#define GRAVITY 50
-#define FPS 60
-#define JUMP -3000
-void dev(char *text) {
-    std::cout << text;
+#define SERVER_HOST "http://rpg.json.scot"
+
+class userTextureIdentifier {
+public:
+    std::string username;
+    SDL_Texture* texture;
+    userTextureIdentifier() {}
+    userTextureIdentifier(std::string inputUsername, SDL_Texture* inputTexture) {
+        username = inputUsername;
+        texture = inputTexture;
+    }
+};
+
+int FPS = 20;
+int connectedUsersSize = 0;
+int fontSize = 40;
+int currentUsersOnServer;
+int mousePosX;
+int mousePosY;
+int curUserPosInArray;
+int WIDTH = 800;
+int HEIGHT = 800;
+bool connected = false;
+bool sentInitial = false;
+char* WINDOW_TITLE = "Oshi";
+std::string username;
+std::string currentUserSocketId;
+Character connectedUsers[3];
+userTextureIdentifier usernameTextureCache[3];
+SDL_Color White = { 255, 255, 255 };
+SDL_Event event;
+Game gameObject(WIDTH, HEIGHT);
+sio::client client;
+
+
+SDL_Texture* renderFont(SDL_Renderer* renderer, TTF_Font* font, std::string text, int fontSize) {
+    SDL_Surface* surface = TTF_RenderText_Solid(font, text.c_str(), {255, 255, 255});
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_FreeSurface(surface);
+    return texture;
 }
-int main(int argc, char *argv[]){
-   printf("Loading Game");
-#if EE_CURRENT_PLATFORM == EE_PLATFORM_WINDOWS
-    SDL_setenv("SDL_AUDIODRIVER", "directsound", true);
-#endif
-    /* Initializes the timer, audio, video, joystick,
-    haptic, gamecontroller and events subsystems */
-    if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
-    {
-        printf("Error initializing SDL: %s\n", SDL_GetError());
-        return 0;
+
+bool in_array(userTextureIdentifier value, const std::string& array)
+{
+    return std::find(array.begin(), array.end(), value) != array.end();
+}
+
+
+void onEnter(sio::event& evnt) {
+    std::string user = evnt.get_message()->get_map()["user"]->get_string();
+    printf("Client %s connected\n", user.c_str());
+    currentUserSocketId = user;
+    connected = true;
+}
+
+void gameTick(sio::event& evnt) {
+    sio::message::list user(username);
+    user.push(sio::string_message::create(std::to_string(mousePosX)));
+    user.push(sio::string_message::create(std::to_string(mousePosY)));
+    client.socket()->emit("user_update", user);
+    int checkCurrentUsersOnServer = static_cast<int>(evnt.get_message()->get_vector().size());
+    if (checkCurrentUsersOnServer != currentUsersOnServer) {
+        currentUsersOnServer = checkCurrentUsersOnServer;
     }
-    /* CDreate a window */
-    SDL_Window* wind = SDL_CreateWindow(WINDOW_TITLE,
-        SDL_WINDOWPOS_CENTERED,
-        SDL_WINDOWPOS_CENTERED,
-        WIDTH, HEIGHT, 0);
-    if (!wind)
-    {
-        printf("Error creating window: %s\n", SDL_GetError());
-        SDL_Quit();
-        return 0;
+
+    for (int i = 0; i < checkCurrentUsersOnServer; i++) {
+        std::string user = evnt.get_message()->get_vector()[i]->get_map()["user"]->get_string();
+        std::string usernameRemote = evnt.get_message()->get_vector()[i]->get_map()["username"]->get_string();
+        std::string x = evnt.get_message()->get_vector()[i]->get_map()["x"]->get_string();
+        std::string y = evnt.get_message()->get_vector()[i]->get_map()["y"]->get_string();
+        if (user == currentUserSocketId) {
+            curUserPosInArray = i;
+            connectedUsers[i] = Character(gameObject.renderer, username);
+            connectedUsers[i].isPlayer = true;
+            connectedUsers[i].username = username;
+            connectedUsers[i].move(std::stoi(x), std::stoi(y));
+        }
+        else {
+            connectedUsers[i] = Character(gameObject.renderer, usernameRemote);
+            connectedUsers[i].move(std::stoi(x), std::stoi(y));
+        }
     }
-    SDL_SetWindowBordered(wind, SDL_FALSE);
-    /* Create a renderer */
-    Uint32 render_flags = SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC;
-    SDL_Renderer* rend = SDL_CreateRenderer(wind, -1, render_flags);
-    if (!rend)
-    {
-        printf("Error creating renderer: %s\n", SDL_GetError());
-        SDL_DestroyWindow(wind);
-        SDL_Quit();
-        return 0;
+}
+
+int main(int argc, char* argv[]) {
+    std::cout << "Whats your username?: " << std::endl;
+    std::cin >> username;
+    gameObject.setTitle(WINDOW_TITLE);
+    int TTF_Engine = TTF_Init();
+    if (TTF_Engine == -1) {
+        printf("Could not init TTF Engine");
     }
-    
-    SDL_Surface* image = SDL_LoadBMP("assets/textures/jord.bmp");
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, image);
-    SDL_FreeSurface(image);
-    /* Main loop */
-    bool running = true, jump_pressed = false, can_jump = true,
-        left_pressed = false, right_pressed = false, up_pressed = false, down_pressed = false;
-    int x_pos = (WIDTH - SIZE) / 2, y_pos = (HEIGHT - SIZE) / 2, x_vel = 0, y_vel = 0;
-    SDL_Rect rect = { (int)x_pos, (int)y_pos, SIZE, SIZE };
-    SDL_Event event;
-    if (SDL_Init(SDL_INIT_AUDIO) < 0)
-    {
-        return 1;
-    }
-    initAudio();
-    playMusic("assets/audio/audio.wav", SDL_MIX_MAXVOLUME);
-    TTF_Init();
-    int fontSize = 40;
+
     TTF_Font* font = TTF_OpenFont("assets/font/font.ttf", fontSize);
     if (!font) {
         printf("Could not open font file");
-        return(2);
     }
-    SDL_Color White = { 255, 255, 255 };
-    int mousePosX;
-    int mousePosY;
+
+    client.connect(SERVER_HOST);
+    client.socket()->emit("user_wants_connection", username);
+    client.socket()->on("user_got_connected", &onEnter);
+    SDL_Delay(1000);
+    SDL_GetMouseState(&mousePosX, &mousePosY);
+    while (!sentInitial) {
+        
+        if (connected) {
+            printf("HELLO");
+            sio::message::list user(username);
+            user.push(sio::string_message::create(std::to_string(mousePosX)));
+            user.push(sio::string_message::create(std::to_string(mousePosY)));
+            client.socket()->emit("send_inital_user_data", user);
+
+            connectedUsers[0] = Character(gameObject.renderer, username);
+            connectedUsers[0].isPlayer = true;
+            connectedUsers[0].rect.x = mousePosX;
+            connectedUsers[0].rect.y = mousePosY;
+            sentInitial = true;
+            break;
+        }
+    }
     
- 
-    while (running){
-        /* Process events */
+    client.socket()->on("game_tick", &gameTick);
+
+    bool running = true;
+    
+    while (running) {
         while (SDL_PollEvent(&event))
         {
-            switch (event.type){
+            switch (event.type) {
             case SDL_QUIT:
+                printf("Game was closed");
                 running = false;
                 break;
-            case SDL_KEYDOWN:
-                switch (event.key.keysym.scancode){
-                case SDL_SCANCODE_SPACE:
-                    jump_pressed = true;
-                    break;
-                case SDL_SCANCODE_A:
-                case SDL_SCANCODE_LEFT:
-                    left_pressed = true;
-                    break;
-                case SDL_SCANCODE_D:
-                case SDL_SCANCODE_RIGHT:
-                    right_pressed = true;
-                    break;
-                case SDL_SCANCODE_W:
-                case SDL_SCANCODE_UP:
-                    up_pressed = true;
-                    break;
-                case SDL_SCANCODE_S:
-                case SDL_SCANCODE_DOWN:
-                    down_pressed = true;
-                    break;
+            /*case SDL_KEYDOWN:
+                switch (event.key.keysym.scancode) {
+
                 default:
                     break;
                 }
                 break;
             case SDL_KEYUP:
-                switch (event.key.keysym.scancode){
-                case SDL_SCANCODE_SPACE:
-                    jump_pressed = false;
-                    break;
-                case SDL_SCANCODE_A:
-                case SDL_SCANCODE_LEFT:
-                    left_pressed = false;
-                    break;
-                case SDL_SCANCODE_D:
-                case SDL_SCANCODE_RIGHT:
-                    right_pressed = false;
-                    break;
-                case SDL_SCANCODE_W:
-                case SDL_SCANCODE_UP:
-                    up_pressed = false;
-                    break;
-                case SDL_SCANCODE_S:
-                case SDL_SCANCODE_DOWN:
-                    down_pressed = false;
-                    break;
+                switch (event.key.keysym.scancode) {
                 default:
                     break;
                 }
-                break;
+                break;*/
             default:
                 break;
             }
         }
+        SDL_SetRenderDrawColor(gameObject.renderer, 0, 0, 0, 255);
+        SDL_RenderClear(gameObject.renderer);
         
-        // Clear screen
         
-        SDL_SetRenderDrawColor(rend, 0, 0, 0, 255);
-        SDL_RenderClear(rend);
-        
-        // Move the rectangle
-
-        /*x_vel = (right_pressed - left_pressed) * SPEED;
-        y_vel += GRAVITY;
-        if (jump_pressed && can_jump)
-        {
-            can_jump = false;
-            y_vel = JUMP;
-        }
-        x_pos += x_vel / 60;
-        y_pos += y_vel / 60;
-        if (x_pos <= 0)
-            x_pos = 0;
-        if (x_pos >= WIDTH - rect.w)
-            x_pos = WIDTH - rect.w;
-        if (y_pos <= 0)
-            y_pos = 0;
-        if (y_pos >= HEIGHT - rect.h)
-        {
-            y_vel = 0;
-            y_pos = HEIGHT - rect.h;
-            if (!jump_pressed)
-                can_jump = true;
-        }*/
-        if (x_pos >= (WIDTH - rect.w) / 2) {
-            x_vel = 0;
-           x_pos =(WIDTH - rect.w) / 2;
-        }
-
-        if (y_pos >= (HEIGHT - rect.h) /2) {
-            std::cout << std::to_string(HEIGHT - rect.h / 2) << "\n";
-            y_vel = 0;
-            y_pos = (HEIGHT - rect.h) /2;
-        }
-        x_vel = (right_pressed - left_pressed) * SPEED;
-        y_vel = (down_pressed - up_pressed) * SPEED;
-        x_pos += x_vel / 60;
-        y_pos += y_vel / 60;
-        rect.x = (int)x_pos;
-        rect.y = (int)y_pos;
-
         SDL_GetMouseState(&mousePosX, &mousePosY);
-        std::string text = "Mouse - X: " + std::to_string(mousePosX) + " Y: " + std::to_string(mousePosY) + " Char - X: " + std::to_string(x_pos) + " Y: " + std::to_string(y_pos);
+        std::string text = "Mouse - X: " + std::to_string(mousePosX) + " Y: " + std::to_string(mousePosY);
+
         SDL_Surface* surfaceMessage = TTF_RenderText_Solid(font, text.c_str(), White);
-        SDL_Texture* Message = SDL_CreateTextureFromSurface(rend, surfaceMessage);
+        SDL_Texture* Message = SDL_CreateTextureFromSurface(gameObject.renderer, surfaceMessage);
         SDL_Rect Message_rect; //create a rect
         Message_rect.x = 0;  //controls the rect's x coordinate 
         Message_rect.y = 0; // controls the rect's y coordinte
-        Message_rect.w = strlen(text.c_str()) * 10 + fontSize; // controls the width of the rect
+        Message_rect.w = static_cast<int>(strlen(text.c_str())) * 10 + fontSize; // controls the width of the rect
         Message_rect.h = fontSize; // controls the height of the rect
 
-        /* Draw the rectangle */
-        SDL_RenderCopy(rend, texture, NULL, &rect);
-        SDL_RenderCopy(rend, Message, NULL, &Message_rect);
+        connectedUsers[curUserPosInArray].move(mousePosX, mousePosY);
+        
+        if (in_array(usernameTextureCache, username)) {
+            printf("FOUND IT");
+        }
+        else {
+            printf("COULD NOT FIND");
+            SDL_Texture* currentUserTexture = renderFont(gameObject.renderer, font, connectedUsers[curUserPosInArray].username, 40);
+            usernameTextureCache[0] = { username, currentUserTexture };
+        }
+        //connectedUsers[curUserPosInArray].draw();
 
-        /* Draw to window and loop */
-        SDL_RenderPresent(rend);
+        for (int i = 0; i < currentUsersOnServer; i++) {
+            if (!connectedUsers[i].isPlayer) {
+                connectedUsers[i].draw();
+            }
+        }
+        SDL_RenderCopy(gameObject.renderer, Message, NULL, &Message_rect);
+
+        SDL_DestroyTexture(Message);
+        SDL_FreeSurface(surfaceMessage);
+        SDL_RenderPresent(gameObject.renderer);
         SDL_Delay(1000 / FPS);
     }
-    /* Release resources */
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(rend);
-    SDL_DestroyWindow(wind);
+    SDL_DestroyRenderer(gameObject.renderer);
+    SDL_DestroyWindow(gameObject.window);
     SDL_Quit();
     return 0;
 }

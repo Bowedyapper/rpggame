@@ -2,7 +2,11 @@ class Game {
 public:
 	SDL_Window* window;
 	SDL_Renderer* renderer;
-	Game(int HEIGHT, int WIDTH) {
+	int HEIGHT, WIDTH;
+	Game() {}
+	Game(int height, int width) {
+		HEIGHT = height;
+		WIDTH = width;
 		#if EE_CURRENT_PLATFORM == EE_PLATFORM_WINDOWS
 		printf("Environment is windows, setting audio driver to Directsound\n");
 			SDL_setenv("SDL_AUDIODRIVER", "directsound", true);
@@ -19,7 +23,7 @@ public:
 		 window = SDL_CreateWindow("",
 			SDL_WINDOWPOS_CENTERED,
 			SDL_WINDOWPOS_CENTERED,
-			WIDTH, HEIGHT, 0);
+			WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
 		if (!window)
 		{
 			printf("error");
@@ -42,6 +46,13 @@ public:
 
 	void setTitle(char* title) {
 		SDL_SetWindowTitle(window, title);
+	}
+
+	void resizeWindow(int w, int h) {
+		WIDTH = w;
+		HEIGHT = h;
+		SDL_SetWindowSize(window, w, h);
+
 	}
 private:
 };

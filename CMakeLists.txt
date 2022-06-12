@@ -5,9 +5,9 @@ project(RPGGame)
 set(SDL2_PATH "G:/cpp_libs/SDL2-2.0.22" CACHE BOOL "" FORCE)
 set(SDL2_TTF_PATH "G:/cpp_libs/SDL2_ttf-2.0.18" CACHE BOOL "" FORCE)
 set(SDL2_IMAGE_PATH "G:/cpp_libs/SDL2_image-2.0.5" CACHE BOOL "" FORCE)
-set(sioclient_DIR "G:/cpp_libs/sioclient" CACHE BOOL "" FORCE)
+set(sioclient_DIR "G:/cpp_libs/sioclient_debug" CACHE BOOL "" FORCE)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
-add_executable(RPGGame main.cpp)
+add_executable(RPGGame "main.cpp")
 
 # Add SDL2 library
 find_package(SDL2 REQUIRED)
