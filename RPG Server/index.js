@@ -40,7 +40,7 @@ setInterval(() => {
 
     console.log(userChunk)
     io.emit("game_tick", userChunk);
-}, 45);
+}, 200);
 
 /*
 // Physics tick loop
@@ -65,39 +65,25 @@ setInterval(() => {
             if (action.action.move) {
                 //console.log(action)
                 if (action.action.move.dir === "right") {
-                    user.x += (1 * 0.3) * action.action.delta
+                    user.x += Math.ceil((1 * 0.3) * action.action.delta)
                     updateQueue.dequeue(index)
                 }
                 if (action.action.move.dir === "left") {
-                    user.x -= (1 * 0.3) * action.action.delta
+                    user.x -= Math.ceil((1 * 0.3) * action.action.delta)
                     updateQueue.dequeue(index)
                 }
                 if (action.action.move.dir === "up") {
-                    user.y -= (1 * 0.3) * action.action.delta
+                    user.y -= Math.ceil((1 * 0.3) * action.action.delta)
                     updateQueue.dequeue(index)
                 }
                 if (action.action.move.dir === "down") {
-                    user.y += (1 * 0.3) * action.action.delta
+                    user.y += Math.ceil((1 * 0.3) * action.action.delta)
                     updateQueue.dequeue(index)
                 }
             }
         })
     })
 }, 15)
-const CPU = new Player('', 'CPU')
-users.push(CPU);
-
-setInterval(() => {
-    const getCPU = users.find(user => user.socketid === "CPU");
-    getCPU.x = 0;
-    getCPU.y = 0;
-}, 3000)
-setInterval(() => {
-    updateQueue.enqueue({ user: "CPU", action: { move: { dir: "right" }, delta: 15 } });
-    updateQueue.enqueue({ user: "CPU", action: { move: { dir: "down" }, delta: 15 } });
-    //updateQueue.enqueue({ user: "CPU", action: { move: { dir: "left" }, delta: 15 } });
-    //updateQueue.enqueue({ user: "CPU", action: { move: { dir: "up" }, delta: 15 } });
-}, 45)
 
 io.on('connection', (socket) => {
 
@@ -154,6 +140,7 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         console.log(socket.id, 'disconnected')
         users.splice(users.findIndex(({ user }) => user == socket.id), 1);
+        io.emit('user_left', socket.id)
     })
 });
 
