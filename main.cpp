@@ -1,4 +1,5 @@
 ﻿#include <SDL.h>
+#include <SDL_image.h>
 #include <SDL_ttf.h>
 #include <iostream>
 #include <algorithm>
@@ -9,16 +10,14 @@
 #include <map>
 #include "globals.h"
 #include "colours.cpp"
+#include "texture.cpp"
 #include "game.cpp"
 #include "character.cpp"
 #include <sio_client.h>
 #include <sio_message.h>
 #include <sio_socket.h>
 
-
-typedef std::tuple<SDL_Texture*, int, int> textureTuple;
-typedef std::vector<textureTuple> textureVector;
-typedef std::pair<std::string, std::vector<textureTuple>> textureTupleKeyPair;
+typedef std::pair<std::string, Texture> textureKeyPair;
 typedef std::_Vector_iterator<std::_Vector_val<std::_Simple_types<Character>>> characterVectorIterator;
 
 int delta;
@@ -38,8 +37,8 @@ std::vector<Character> playerVector;
 std::vector<sio::message::ptr> playerChunk;
 std::string currentUserSocketId;
 sio::client client;
-std::map<std::string, textureVector> textures;
-Game gameObject(windowWidth, windowHeight);
+std::map<std::string, Texture> textures;
+Game gameObject;
 Character player("player");
 SDL_Event event;
 TTF_Font* font;
@@ -64,7 +63,6 @@ void onConnection(sio::event& evnt) {
 }
 
 auto renderText(char* fontFile, int fontSize, char* text, SDL_Color colour) {
-	textureVector returnVector;
 	SDL_Surface* textSurface;
 	SDL_Texture* textTexture;
 	font = TTF_OpenFont(fontFile, fontSize);
@@ -73,21 +71,21 @@ auto renderText(char* fontFile, int fontSize, char* text, SDL_Color colour) {
 	TTF_CloseFont(font);
 	int textWidth = textSurface->w;
 	int textHeight = textSurface->h;
-	returnVector.push_back(textureTuple(textTexture, textWidth, textHeight));
+	Texture returnClass(textTexture, textWidth, textHeight);
 	SDL_FreeSurface(textSurface);
 
-	return returnVector;
+	return returnClass;
 }
 
 int displayText(char* fontFile, int fontSize, char* text, int x, int y, SDL_Color colour) {
 	SDL_Texture* textTexture;
 	SDL_Rect textRect;
-	textureVector textVector = renderText(fontFile, fontSize, text, colour);
-	textTexture = std::get<0>(textVector[0]);
+	Texture texture = renderText(fontFile, fontSize, text, colour);
+	textTexture = texture.texture;
 	textRect.x = x;
 	textRect.y = y;
-	textRect.w = std::get<1>(textVector[0]);
-	textRect.h = std::get<2>(textVector[0]);
+	textRect.w = texture.width;
+	textRect.h = texture.height;
 
 	return SDL_RenderCopy(gameObject.renderer, textTexture, NULL, &textRect);
 }
@@ -101,6 +99,10 @@ int displayTexture(SDL_Texture* texture, int w, int h, int x, int y) {
 	return SDL_RenderCopy(gameObject.renderer, texture, NULL, &textureRect);
 }
 
+Texture getTexture(std::string textureName) {
+	auto getTextureFromMap = textures.at(textureName);
+	return getTextureFromMap;
+}
 void eventHandler(SDL_Event event) {
 	switch (event.type) {
 	case SDL_QUIT:
@@ -235,7 +237,14 @@ void handleUserDisconnect(sio::event& evnt) {
 }
 
 void mainMenu() {
-	//displayText("assets/font/font.ttf", 30, "Hello :)", 150, 150, white);
+
+	Texture titleImg = getTexture("title");
+	Texture playBtn = getTexture("Play");
+	Texture optionsBtn = getTexture("Options");
+
+	displayTexture(titleImg.texture, titleImg.width, titleImg.height, (windowWidth / 2) - titleImg.width / 2, 10);
+	displayTexture(playBtn.texture, playBtn.width, playBtn.height, (windowWidth / 2) - playBtn.width / 2, 350);
+	displayTexture(optionsBtn.texture, optionsBtn.width, optionsBtn.height, (windowWidth / 2) - optionsBtn.width / 2, 400);
 }
 
 void game() {
@@ -248,20 +257,24 @@ void game() {
 }
 
 int main(int argc, char* argv[]) {
-	textureVector someGame = renderText("assets/font/font.ttf", 30, "Some Game :)", white);
-	textures.insert(textureTupleKeyPair("some", someGame));
+	Texture someGame = renderText("assets/font/font.ttf", 30, "Some Game :)", white);
+
+	SDL_Surface* title = IMG_Load("assets/textures/title.png");
+	SDL_Texture* title_tex = SDL_CreateTextureFromSurface(gameObject.renderer, title);
+	Texture titleTex(title_tex, title->h, title->w);
+	SDL_FreeSurface(title);
+
+	textures.insert(textureKeyPair("some", someGame));
+	textures.insert(textureKeyPair("title", titleTex));
+
+	textures.insert(textureKeyPair("Play", renderText("assets/font/font.ttf", 30, "Play", white)));
+	textures.insert(textureKeyPair("Options", renderText("assets/font/font.ttf", 30, "Options", white)));
 	client.connect(serverHost);
 	client.socket()->emit("user_wants_connection");
 	client.socket()->on("user_got_connected", &onConnection);
 	client.socket()->on("game_chunk_update", &gameChunkUpdate);
 	client.socket()->on("user_disconnect", &handleUserDisconnect);
 
-	
-	auto getTexFromMap = textures.at("some");
-	std::cout << std::get<1>(getTexFromMap[0]) << std::endl;
-	auto getTextureFromTuple = std::get<0>(getTexFromMap[0]);
-	auto getWFromTuple = std::get<1>(getTexFromMap[0]);
-	auto getHFromTuple = std::get<2>(getTexFromMap[0]);
 	while (!connected) {
 		//do hee haw
 	}
@@ -274,7 +287,7 @@ int main(int argc, char* argv[]) {
 		}
 
 		clearScreen();
-		displayTexture(getTextureFromTuple, getWFromTuple, getHFromTuple, 10, 10);
+		game();
 		SDL_RenderPresent(gameObject.renderer);
 		SDL_Delay(1000 / FPS);
 	}
