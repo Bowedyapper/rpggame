@@ -11,19 +11,13 @@ let ptime = Date.now();    // Time since last frame
 let offset = 0;
 let tickRate = 1000 / 60;
 let updateQueue = new Queue();
+let users = [];
 
 const deltaTime = (previous, offset) => {
     let Δt = (Date.now() - previous);  // Δt = Current time - time of last frame
     return Δt;
 }
 
-const delay = async (time) => {
-    return new Promise((resolve) => {
-        setTimeout(() => { resolve() }, time)
-    })
-}
-
-let users = [];
 app.get('/', (req, res) => {
     res.send("Hello");
 });
@@ -39,8 +33,8 @@ setInterval(() => {
     })
 
     console.log(userChunk)
-    io.emit("game_tick", userChunk);
-}, 200);
+    io.emit("game_chunk_update", userChunk);
+}, 45);
 
 /*
 // Physics tick loop
@@ -53,17 +47,12 @@ setInterval(() => {
 
     io.emit("physics_update_tick")
 
-    //if (updateQueue.isEmpty()) return;
+    if (updateQueue.isEmpty()) return;
     users.forEach((user, index) => {
-        //console.log(`Player ${index + 1}'s`, 'X:', user.x);
-        //console.log(`Player ${index + 1}'s`, 'Y:', user.y);
         const getActions = updateQueue.items.filter(item => item.user === user.socketid)
-        //const getUser = users.find(user => user.socketid == "CPU")
         if (!getActions) return;
-        //console.log(getActions)
         getActions.forEach((action, index) => {
             if (action.action.move) {
-                //console.log(action)
                 if (action.action.move.dir === "right") {
                     user.x += Math.ceil((1 * 0.3) * action.action.delta)
                     updateQueue.dequeue(index)
@@ -86,24 +75,10 @@ setInterval(() => {
 }, 15)
 
 io.on('connection', (socket) => {
-
     const player = new Player('', socket.id)
     users.push(player);
 
-    socket.onAny((event, data) => {
-        //console.log(event, Buffer.from(data).toString())
-    })
-
-    socket.on('send_inital_user_data', (username, posX, posY) => {
-        socket.broadcast.emit("user_joined", { user: socket.id, username: username, x: posX, y: posY })
-        const getUser = users.findIndex(({ user }) => user == socket.id);
-        users[getUser].username = username
-        users[getUser].x = posX;
-        users[getUser].y = posY;
-    })
-
     socket.on('move', (dir, delta, previousPos, time) => {
-        //console.log(new Date(time*1000))
         const direction = Buffer.from(dir).toString()
         if (direction === 'u') {
             player.up_pressed = true;
@@ -123,36 +98,18 @@ io.on('connection', (socket) => {
         }
     })
 
-    //socket.emit('force_pos', {x:player.x, y:player.y});
-    socket.on('user_update', (username, posX, posY) => {
-        //socket.broadcast.emit("user_joined", { user: socket.id, x: posX, y: posY})
-        const getUser = users.findIndex(({ user }) => user == socket.id);
-        users[getUser].username = username
-        users[getUser].x = posX;
-        users[getUser].y = posY;
-    })
-
     socket.on('user_wants_connection', (username) => {
-        //users.push({ user: socket.id, x: "0", y: "0", username: username })
         socket.emit("user_got_connected", { user: socket.id })
 
     })
+
     socket.on('disconnect', () => {
         console.log(socket.id, 'disconnected')
         users.splice(users.findIndex(({ user }) => user == socket.id), 1);
-        io.emit('user_left', socket.id)
+        io.emit('user_disconnect', socket.id)
     })
 });
 
-let running = true;
-// while(running){
-//   delta = deltaTime(ptime, offset);
-//   ptime = Date.now();
-//   offset = delta % (1000 / tickRate);
-//   ptime = Date.now();
-//   console.log(delta)
-//   await delay(tickRate)
-// }
 server.listen(4545, () => {
     console.log('listening on *:3000');
 });
