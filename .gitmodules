@@ -1,0 +1,9 @@
+[submodule "include/SDL2"]
+	path = include/SDL2
+	url = https://github.com/libsdl-org/SDL.git
+[submodule "include/socket.io-client"]
+	path = include/socket.io-client
+	url = https://github.com/socketio/socket.io-client-cpp.git
+[submodule "include/sdl2-cmake-modules"]
+	path = include/sdl2-cmake-modules
+	url = https://gitlab.com/aminosbh/sdl2-cmake-modules.git
