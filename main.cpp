@@ -6,7 +6,7 @@
 #include <string>
 #include <future>
 #include <ctime>
-//#include <map>
+#include <map>
 #include "globals.h"
 #include "colours.cpp"
 #include "game.cpp"
@@ -14,6 +14,12 @@
 #include <sio_client.h>
 #include <sio_message.h>
 #include <sio_socket.h>
+
+
+typedef std::tuple<SDL_Texture*, int, int> textureTuple;
+typedef std::vector<textureTuple> textureVector;
+typedef std::pair<std::string, std::vector<textureTuple>> textureTupleKeyPair;
+typedef std::_Vector_iterator<std::_Vector_val<std::_Simple_types<Character>>> characterVectorIterator;
 
 int delta;
 int ptime;    // Time since last frame
@@ -32,6 +38,7 @@ std::vector<Character> playerVector;
 std::vector<sio::message::ptr> playerChunk;
 std::string currentUserSocketId;
 sio::client client;
+std::map<std::string, textureVector> textures;
 Game gameObject(windowWidth, windowHeight);
 Character player("player");
 SDL_Event event;
@@ -56,21 +63,42 @@ void onConnection(sio::event& evnt) {
 	connected = true;
 }
 
-auto renderText(char* fontFile, int fontSize, char* text, int x, int y) {
+auto renderText(char* fontFile, int fontSize, char* text, SDL_Color colour) {
+	textureVector returnVector;
 	SDL_Surface* textSurface;
 	SDL_Texture* textTexture;
-	SDL_Rect textRect;
 	font = TTF_OpenFont(fontFile, fontSize);
-	textSurface = TTF_RenderText_Blended_Wrapped(font, text, black, 0);
+	textSurface = TTF_RenderText_Blended_Wrapped(font, text, colour, 0);
 	textTexture = SDL_CreateTextureFromSurface(gameObject.renderer, textSurface);
+	TTF_CloseFont(font);
+	int textWidth = textSurface->w;
+	int textHeight = textSurface->h;
+	returnVector.push_back(textureTuple(textTexture, textWidth, textHeight));
+	SDL_FreeSurface(textSurface);
+
+	return returnVector;
+}
+
+int displayText(char* fontFile, int fontSize, char* text, int x, int y, SDL_Color colour) {
+	SDL_Texture* textTexture;
+	SDL_Rect textRect;
+	textureVector textVector = renderText(fontFile, fontSize, text, colour);
+	textTexture = std::get<0>(textVector[0]);
 	textRect.x = x;
 	textRect.y = y;
-	textRect.w = textSurface->w;
-	textRect.h = textSurface->h;
-	TTF_CloseFont(font);
-	SDL_FreeSurface(textSurface);
-	return SDL_RenderCopy(gameObject.renderer, textTexture, NULL, &textRect);
+	textRect.w = std::get<1>(textVector[0]);
+	textRect.h = std::get<2>(textVector[0]);
 
+	return SDL_RenderCopy(gameObject.renderer, textTexture, NULL, &textRect);
+}
+
+int displayTexture(SDL_Texture* texture, int w, int h, int x, int y) {
+	SDL_Rect textureRect;
+	textureRect.x = x;
+	textureRect.y = y;
+	textureRect.w = w;
+	textureRect.h = h;
+	return SDL_RenderCopy(gameObject.renderer, texture, NULL, &textureRect);
 }
 
 void eventHandler(SDL_Event event) {
@@ -185,9 +213,9 @@ void gameChunkUpdate(sio::event& evnt) {
 		double y = evnt.get_message()->get_vector()[ii]->get_map()["y"]->get_double();
 
 		if (user != currentUserSocketId) {
-			std::_Vector_iterator<std::_Vector_val<std::_Simple_types<Character>>> findUser = find_if(playerVector.begin(), playerVector.end(), [&user](const Character obj) {return obj.socketid == user; });
+			characterVectorIterator findUser = find_if(playerVector.begin(), playerVector.end(), [&user](const Character obj) {return obj.socketid == user; });
 			if (findUser != playerVector.end()) {
-				findUser->pos(x, y);
+				findUser->pos(static_cast<int>(x), static_cast<int>(y));
 			}
 			else {
 				Character newPlayer(user);
@@ -206,14 +234,34 @@ void handleUserDisconnect(sio::event& evnt) {
 	}
 }
 
+void mainMenu() {
+	//displayText("assets/font/font.ttf", 30, "Hello :)", 150, 150, white);
+}
+
+void game() {
+	movementHandler();
+
+	drawRemotePlayers();
+	player.draw(); // Draw current player
+
+	displayText("assets/font/font.ttf", 30, "Hello :)", 150, 150, white);
+}
 
 int main(int argc, char* argv[]) {
-	
+	textureVector someGame = renderText("assets/font/font.ttf", 30, "Some Game :)", white);
+	textures.insert(textureTupleKeyPair("some", someGame));
 	client.connect(serverHost);
 	client.socket()->emit("user_wants_connection");
 	client.socket()->on("user_got_connected", &onConnection);
 	client.socket()->on("game_chunk_update", &gameChunkUpdate);
 	client.socket()->on("user_disconnect", &handleUserDisconnect);
+
+	
+	auto getTexFromMap = textures.at("some");
+	std::cout << std::get<1>(getTexFromMap[0]) << std::endl;
+	auto getTextureFromTuple = std::get<0>(getTexFromMap[0]);
+	auto getWFromTuple = std::get<1>(getTexFromMap[0]);
+	auto getHFromTuple = std::get<2>(getTexFromMap[0]);
 	while (!connected) {
 		//do hee haw
 	}
@@ -225,14 +273,8 @@ int main(int argc, char* argv[]) {
 			eventHandler(event);
 		}
 
-		movementHandler();
-
 		clearScreen();
-
-		drawRemotePlayers();
-		player.draw(); // Draw current player
-
-		renderText("assets/font/font.ttf", 30, "Hello :)", 150, 150);
+		displayTexture(getTextureFromTuple, getWFromTuple, getHFromTuple, 10, 10);
 		SDL_RenderPresent(gameObject.renderer);
 		SDL_Delay(1000 / FPS);
 	}
