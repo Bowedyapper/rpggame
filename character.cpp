@@ -46,7 +46,7 @@ public:
 		std::cout << "Colour changed to " << colourArrayLabel[currentColour] << std::endl;
 	}
 
-	void pos(double xPos, double yPos) {
+	void pos(int xPos, int yPos) {
 		rect.x = xPos;
 		rect.y = yPos;
 	}
