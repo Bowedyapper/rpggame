@@ -3,3 +3,4 @@ socket.io-client-cpp
 assets_to_be_copied/
 node_modules/
 .vs/
+build/
