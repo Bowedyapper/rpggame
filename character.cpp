@@ -4,14 +4,10 @@
 extern Game gameObject;
 extern int delta;
 class Character {
-private: 
+private:
 public:
 	SDL_Rect rect;
 	SDL_Renderer* renderer;
-	bool up_pressed = false;
-	bool down_pressed = false;
-	bool left_pressed = false;
-	bool right_pressed = false;
 	double SPEED = 0.3;
 	double x = 0;
 	double y = 0;
@@ -32,7 +28,6 @@ public:
 	   {69, 3, 252, 255}
 	};
 
-	//Character() {}
 	Character(std::string socketId) {
 		socketid = socketId;
 		renderer = gameObject.renderer;
@@ -51,31 +46,14 @@ public:
 		std::cout << "Colour changed to " << colourArrayLabel[currentColour] << std::endl;
 	}
 
-	void pos(int xx, int yy) {
-		rect.x = xx;
-		rect.y = yy;
+	void pos(double xPos, double yPos) {
+		rect.x = xPos;
+		rect.y = yPos;
 	}
 
 	void move(std::string direction) {
-		
-		/*if (x_pos <= 0)
-			x_pos = 0;
-		if (x_pos >= gameObject.WIDTH - rect.w)
-			x_pos = gameObject.WIDTH - rect.w;
-		if (y_pos <= 0)
-			y_pos = 0;
-		if (y_pos >= gameObject.HEIGHT - rect.h)
-		{
-			y_vel = 0;
-			y_pos = gameObject.HEIGHT - rect.h;
-		}
-		
-		if (right_pressed)x_pos += (1 * SPEED) * delta;
-		if (left_pressed)x_pos += (-1 * SPEED) * delta;
-		if (up_pressed)y_pos += (-1 * SPEED) * delta;
-		if (down_pressed)y_pos += (1 * SPEED) * delta;*/
-		
-		int calc = std::ceil((1 * SPEED) * delta);
+
+		double calc = std::ceil((1 * SPEED) * delta);
 		if (direction == "up") {
 			y -= calc;
 		}
@@ -91,11 +69,11 @@ public:
 		if (direction == "right") {
 			x += calc;
 		}
-		
+
 		rect.x = (int)x;
 		rect.y = (int)y;
-		
-		
+
+
 	}
 
 	void draw() {

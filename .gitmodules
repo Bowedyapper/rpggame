@@ -4,3 +4,6 @@
 [submodule "socket.io-client"]
 	path = socket.io-client
 	url = https://github.com/socketio/socket.io-client-cpp.git
+[submodule "cmake/tmx"]
+	path = cmake/tmx
+	url = https://github.com/baylej/tmx.git

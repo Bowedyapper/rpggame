@@ -11,16 +11,16 @@ public:
 		printf("Environment is windows, setting audio driver to Directsound\n");
 			SDL_setenv("SDL_AUDIODRIVER", "directsound", true);
 		#endif
-
+			bool ttfInit = TTF_Init();
 			printf("Initalising SDL..");
-		if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
+		if (SDL_Init(SDL_INIT_EVERYTHING) != 0 && ttfInit)
 		{
 			printf("error");
 			throw("Error initializing SDL: %s\n", SDL_GetError());
 		}
 		printf("Success\n");
 			printf("Creating window..");
-		 window = SDL_CreateWindow("",
+		 window = SDL_CreateWindow(windowTitle,
 			SDL_WINDOWPOS_CENTERED,
 			SDL_WINDOWPOS_CENTERED,
 			WIDTH, HEIGHT, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
