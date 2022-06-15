@@ -1,5 +1,4 @@
 out/
 socket.io-client-cpp
-node_modules/
 .vs/
 build/
