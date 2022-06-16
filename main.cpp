@@ -1,5 +1,4 @@
 ﻿#include "headers.h"
-SDL_Event event;
 int main(int argc, char* argv[]) {
 	Game game(800, 600, "MF");
 	Socket socket("http://rpg.json.scot");
@@ -9,20 +8,21 @@ int main(int argc, char* argv[]) {
 		});
 
 
-	//game.mainTextures.loadTexture("map", "assets/textures/map.png");
+	game.mainTextures.loadTexture("map", "assets/textures/map.png");
 	
-	//TextureObject mapT = game.mainTextures.getTexture("map");
-	//SDL_Rect textureRect = { 0, 0, mapT.width, mapT.height };
+	TextureObject mapT = game.mainTextures.getTexture("map");
+	SDL_Rect textureRect = { 0, 0, mapT.width, mapT.height };
 	while (game.isRunning) {
-		while (SDL_PollEvent(&event)) {
-			game.eventHandler(event);
-		}
+		game.pollEvents();
 		game.calculateDeltaTime();
 		game.clearScreen();
 
-		//SDL_RenderCopy(game.renderer, mapT.texture, NULL, &textureRect);
+		SDL_RenderCopy(game.renderer, mapT.texture, NULL, &textureRect);
 
 		game.renderPresent();
+
+		//Enable this to see mouse position
+		//std::cout << "X: " << game.mousePosX << " Y: " << game.mousePosY << std::endl;
 		
 	}
 	return 0;

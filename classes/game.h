@@ -19,11 +19,14 @@ private:
 public:
 	bool isRunning;
 
+	SDL_Event event;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	TextureCache mainTextures;
 	
 	double delta = 0;
+	int mousePosX;
+	int mousePosY;
 	Uint64 timeNow = SDL_GetPerformanceCounter();;
 	Uint64 previousTime = 0;
 	Game(int windowWidth, int windowHeight, char* title ){
@@ -44,6 +47,7 @@ public:
 	void eventHandler(SDL_Event &event);
 	double calculateDeltaTime();
 	double calcFps();
+	void pollEvents();
 
 };
 
@@ -201,3 +205,9 @@ double Game::calcFps() {
 		return fps;
 }
 
+void Game::pollEvents() {
+	SDL_GetMouseState(&mousePosX, &mousePosY);
+	if (SDL_PollEvent(&event)) {
+		eventHandler(event);
+	}
+}
