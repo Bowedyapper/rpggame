@@ -1,0 +1,1 @@
+//typedef std::_Vector_iterator<std::_Vector_val<std::_Simple_types<Character>>> characterVectorIterator;
