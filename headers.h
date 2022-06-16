@@ -1,0 +1,11 @@
+#include <iostream>
+#include <string>
+#include <ctime>
+#include <future>
+#include <map>
+#include <SDL.h>
+#include <SDL_image.h>
+#include <SDL_ttf.h>
+#include "classes/game.h"
+#include "classes/character.h"
+#include "classes/socket.h"
