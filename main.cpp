@@ -1,7 +1,7 @@
 ﻿#include "headers.h"
 int main(int argc, char* argv[]) {
 
-	Game game(800, 600, "MF"); // Create game (creates window and renderer)
+	Game game(800, 600, "RPG Game"); // Create game (creates window and renderer)
 
 	//Socket connection-y stuff
 	Socket socket("http://rpg.json.scot");
@@ -26,6 +26,14 @@ int main(int argc, char* argv[]) {
 
 		//Enable this to see mouse position
 		//std::cout << "X: " << game.mousePosX << " Y: " << game.mousePosY << std::endl;
+		
+		if (-textureRect.x > mapT.width || -textureRect.y > mapT.height) {
+			textureRect.x = 0;
+			textureRect.y = 0;
+		}
+		textureRect.x -= 5;
+		textureRect.y -= 5;
+
 	}
 	return 0;
 }
