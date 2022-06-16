@@ -21,7 +21,6 @@ public:
 	TextureObject getTexture(std::string textureName);
 	SDL_Renderer* renderer;
 private:
-	
 	SDL_Surface* loadImg(char* filePath);
 	TextureObject createTextureFromSurface(SDL_Surface* surface);
 };
@@ -48,15 +47,27 @@ bool TextureCache::loadTexture(char* name, char* filePath) {
 		return false;
 	}
 
+	std::cout << "Image loaded successfully from " << filePath << std::endl;
+
 	TextureObject texture = createTextureFromSurface(surface);
 
 	if (!texture.width) {
 		std::cerr << "Something went wrong converting surface " << filePath << " to a texture" << std::endl;
 		return false;
 	}
-	cache.insert(textureKeyPair(name, texture));
-	std::cout << "Texture loaded successfully" << std::endl;
-	return true;
+	else {
+		std::cout << "Surface created successfully from " << filePath << std::endl;
+		cache.insert(textureKeyPair(name, texture));
+		if (cache.find(name) == cache.end()) {
+			std::cerr << "Texture could not be loaded into memory" << std::endl;
+		}
+		else {
+			std::cout << "Texture loaded into memory successfully as " << name << std::endl;
+		}
+
+		return true;
+	}
+	
 }
 
 void TextureCache::assignRenderer(SDL_Renderer* rendererPtr) {
