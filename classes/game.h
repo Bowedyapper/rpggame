@@ -8,28 +8,36 @@
  * \date   June 2022
  *********************************************************************/
 #include "texture.h"
+#include <assert.h>
+#include <vector>
 class Game {
 private:
-	int windowWidth;
-	int windowHeight;
+	
 	char* windowTitle = "";
+
 	bool init();
 	bool createWindow(int width, int height);
 	bool createRenderer();
+
 public:
-	bool isRunning;
+	bool isRunning = true;
+
+	double delta = 0;
+
+	int mousePosX;
+	int mousePosY;
+	int windowWidth;
+	int windowHeight;
+	Uint64 timeNow = SDL_GetPerformanceCounter();;
+	Uint64 previousTime = 0;
 
 	SDL_Event event;
 	SDL_Window* window;
 	SDL_Renderer* renderer;
 	TextureCache mainTextures;
 	
-	double delta = 0;
-	int mousePosX;
-	int mousePosY;
-	Uint64 timeNow = SDL_GetPerformanceCounter();;
-	Uint64 previousTime = 0;
-	Game(int windowWidth, int windowHeight, char* title ){
+	Game() {}
+	Game(int windowWidth, int windowHeight, char* title){
 		init();
 		windowTitle = title;
 		createWindow(windowWidth, windowHeight);
@@ -41,13 +49,17 @@ public:
 	
 	void setTitle(char* title);
 	void resizeWindow(int w, int h);
-	void clearScreen();
-	void renderPresent();
+	void clearScreen(int r = 0, int g = 0, int b = 0, int alpha = 255);
+	void render();
 	void quit();
-	void eventHandler(SDL_Event &event);
+	void eventHandler(SDL_Event& event);
 	double calculateDeltaTime();
 	double calcFps();
 	void pollEvents();
+	int clipRenderTexture(SDL_Texture* texture, int w, int h, double x, double y, SDL_Rect* clip);
+
+	auto renderText(char* fontFile, int fontSize, char* text, SDL_Color colour);
+	int displayText(char* fontFile, int fontSize, char* text, int x, int y, SDL_Color colour);
 
 };
 
@@ -57,11 +69,11 @@ public:
  */
 bool Game::init() {
 #if EE_CURRENT_PLATFORM == EE_PLATFORM_WINDOWS
+	
 	printf("Environment is windows, setting audio driver to Directsound\n");
 	SDL_setenv("SDL_AUDIODRIVER", "directsound", true);
 #endif
 	bool ttfInit = TTF_Init();
-
 	if (!ttfInit) return false;
 
 	// load support for the JPG and PNG image formats
@@ -94,10 +106,11 @@ bool Game::init() {
 bool Game::createWindow(int width, int height) {
 	windowWidth = width;
 	windowHeight = height;
+	
 	printf("Creating %d x %d window..", width, height);
 	window = SDL_CreateWindow(windowTitle,
-		SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED_DISPLAY(1),
+		SDL_WINDOWPOS_CENTERED_DISPLAY(1),
 		windowWidth, windowHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
 	if (!window)
 	{
@@ -105,7 +118,7 @@ bool Game::createWindow(int width, int height) {
 		throw("Error creating window: %s\n", SDL_GetError());
 		return false;
 	}
-	printf("Success\n");
+	std::cout << hue::green << "Success" << hue::reset << std::endl;
 	return true;
 }
 
@@ -120,7 +133,7 @@ bool Game::createRenderer() {
 		SDL_DestroyWindow(window);
 		return false;
 	}
-	printf("Success\n");
+	std::cout << hue::green << "Success" << hue::reset << std::endl;
 	SDL_RenderSetLogicalSize(renderer, windowWidth, windowHeight);
 	return true;
 }
@@ -136,12 +149,12 @@ void Game::resizeWindow(int w, int h) {
 
 }
 
-void Game::clearScreen() {
+void Game::clearScreen(int r, int g, int b, int alpha) {
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 	SDL_RenderClear(renderer);
 }
 
-void Game::renderPresent() {
+void Game::render() {
 	SDL_RenderPresent(renderer);
 }
 void Game::quit() {
@@ -186,7 +199,7 @@ void Game::eventHandler(SDL_Event &event) {
 		case SDL_SCANCODE_R:
 			//player.x = 0;
 			//player.y = 0;
-			printf("Position reset");
+			//printf("Position reset");
 			break;
 		}
 		break;
@@ -210,4 +223,61 @@ void Game::pollEvents() {
 	if (SDL_PollEvent(&event)) {
 		eventHandler(event);
 	}
+}
+
+int Game::clipRenderTexture(SDL_Texture* texture, int w, int h, double x, double y, SDL_Rect* clip) {
+	SDL_Rect textureRect;
+	textureRect.x = (int)x;
+	textureRect.y = (int)y;
+
+	if (clip != NULL)
+	{
+		textureRect.w = (int)clip->w;
+		textureRect.h = (int)clip->h;
+	}
+	else {
+		textureRect.w = w;
+		textureRect.h = h;
+	}
+	return SDL_RenderCopyEx(renderer, texture, clip, &textureRect, NULL, NULL, SDL_FLIP_NONE);
+}
+
+auto Game::renderText(char* fontFile, int fontSize, char* text, SDL_Color colour) {
+	SDL_Surface* textSurface;
+	SDL_Texture* textTexture;
+	auto font = TTF_OpenFont(fontFile, fontSize);
+	textSurface = TTF_RenderText_Blended_Wrapped(font, text, colour, 0);
+	textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+	TTF_CloseFont(font);
+	int textWidth = textSurface->w;
+	int textHeight = textSurface->h;
+	TextureObject returnClass(textTexture, textWidth, textHeight);
+	SDL_FreeSurface(textSurface);
+
+	return returnClass;
+}
+
+
+int Game::displayText(char* fontFile, int fontSize, char* text, int x, int y, SDL_Color colour) {
+	SDL_Texture* textTexture;
+	SDL_Rect textRect;
+	TextureObject texture = renderText(fontFile, fontSize, text, colour);
+	textTexture = texture.texture;
+	if (x == -1 && y == -1) {
+		textRect.x = windowWidth / 2 - texture.width / 2;
+		textRect.y = windowHeight / 2 - texture.height / 2;;
+	}
+	else {
+		textRect.x = x;
+		textRect.y = y;
+	}
+
+	textRect.w = texture.width;
+	textRect.h = texture.height;
+
+	SDL_RenderCopy(renderer, texture.texture, NULL, &textRect);
+	SDL_DestroyTexture(texture.texture);
+
+	return 0;
+
 }

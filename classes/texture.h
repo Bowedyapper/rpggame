@@ -4,6 +4,7 @@ public:
 	int width;
 	int height;
 
+
 	TextureObject(SDL_Texture* tex, int w, int h) {
 		texture = tex;
 		width = w;
@@ -16,9 +17,11 @@ typedef std::pair<std::string, TextureObject> textureKeyPair;
 class TextureCache{
 public:
 	std::map<std::string, TextureObject> cache;
+	std::map<std::string, TextureObject>::iterator cacheIterator;
 	bool loadTexture(char* name, char* filePath);
 	void assignRenderer(SDL_Renderer* rendererPtr);
 	TextureObject getTexture(std::string textureName);
+	bool unloadTexture(std::string textureName);
 	SDL_Renderer* renderer;
 private:
 	SDL_Surface* loadImg(char* filePath);
@@ -57,11 +60,13 @@ bool TextureCache::loadTexture(char* name, char* filePath) {
 	}
 	else {
 		std::cout << "Surface created successfully from " << filePath << std::endl;
-		cache.insert(textureKeyPair(name, texture));
-		if (cache.find(name) == cache.end()) {
-			std::cerr << "Texture could not be loaded into memory" << std::endl;
+		
+		if (cache.find(name) != cache.end()) {
+			std::cerr << "Texture could not be loaded into memory, name already exists" << std::endl;
+			SDL_DestroyTexture(texture.texture);
 		}
 		else {
+			cache.insert(textureKeyPair(name, texture));
 			std::cout << "Texture loaded into memory successfully as " << name << std::endl;
 		}
 
@@ -77,11 +82,25 @@ void TextureCache::assignRenderer(SDL_Renderer* rendererPtr) {
 TextureObject TextureCache::getTexture(std::string textureName) {
 	
 	if (cache.find(textureName) == cache.end()) {
-		std::cerr << "Could not find texture \"" << textureName << "\" in textureCache" << std::endl;
+		std::cerr << "Could not find texture \"" << textureName << "\" in texture cache" << std::endl;
+		return TextureObject(NULL, NULL, NULL);
 	}
 	else {
 		std::cout << "Found texture with name \"" << textureName << "\"" << std::endl;
 		auto getTextureFromMap = cache.at(textureName);
 		return getTextureFromMap;
+	}
+}
+
+bool TextureCache::unloadTexture(std::string textureName) {
+	if (cache.find(textureName) == cache.end()) {
+		std::cerr << "Could not unload texture \"" << textureName << "\" from texture cache" << std::endl;
+		return false;
+	}
+	else {
+		std::cout << "Unloading texture \"" << textureName << "\"" << std::endl;
+		SDL_DestroyTexture(cache.at(textureName).texture);
+		cache.erase(textureName);
+		return true;
 	}
 }
