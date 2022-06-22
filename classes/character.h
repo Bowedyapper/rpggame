@@ -1,5 +1,5 @@
-extern Game game;
-class Character {
+extern Game *game;
+struct Character {
 private:
 public:
 
@@ -13,7 +13,7 @@ public:
 	SDL_Renderer* renderer;
 	SDL_Texture* charTexture;
 	SDL_Rect rect = { x, y, size, size };
-	SDL_Rect camera = { 1400, 1900, game.windowWidth, game.windowHeight };
+	SDL_Rect camera = { 1400, 1900, game->windowWidth, game->windowHeight };
 	SDL_Rect imgRect;
 
 	SDL_RendererFlip facingDirection = SDL_FLIP_HORIZONTAL;
@@ -36,7 +36,7 @@ public:
 	};
 
 	Character(std::string socketId = "player", SDL_Texture* charTex = nullptr, int xPos = 0, int yPos = 0) {
-		renderer = game.renderer;
+		renderer = game->renderer;
 		socketid = socketId;
 		charTexture = charTex;
 		x = xPos;
@@ -51,6 +51,7 @@ public:
 	bool move(std::string direction);
 	void draw();
 	void drawRemote(SDL_Rect playerCamera);
+	void applyTexture(SDL_Texture* texture);
 };
 
 
@@ -73,7 +74,7 @@ void Character::pos(int xPos, int yPos) {
 }
 
 bool Character::move(std::string direction) {
-	int calc = (int)std::round(std::ceil((1 * SPEED) * game.delta));
+	int calc = (int)std::round(std::ceil((1 * SPEED) * game->delta));
 	//If the player went too far to the left or right
 	if ((x < 0) || (x + size > 6336))
 	{
@@ -140,7 +141,8 @@ void Character::draw() {
 		SDL_RenderFillRect(renderer, &rect);
 		SDL_RenderDrawRect(renderer, &rect);
 	}
-	
-
-
 };
+
+void Character::applyTexture(SDL_Texture* texture) {
+	charTexture = texture;
+}

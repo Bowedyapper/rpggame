@@ -21,7 +21,7 @@ private:
 
 public:
 	bool isRunning = true;
-
+	bool chatOpen = false;
 	double delta = 0;
 
 	int mousePosX;
@@ -59,7 +59,8 @@ public:
 	int clipRenderTexture(SDL_Texture* texture, int w, int h, double x, double y, SDL_Rect* clip);
 
 	auto renderText(char* fontFile, int fontSize, char* text, SDL_Color colour);
-	int displayText(char* fontFile, int fontSize, char* text, int x, int y, SDL_Color colour);
+	int displayText(char* fontFile, int fontSize, std::string text, int x, int y, SDL_Color colour);
+	auto getSystemTime();
 
 };
 
@@ -93,6 +94,7 @@ bool Game::init() {
 		return false;
 	}
 	printf("Success\n");
+
 	isRunning = true;
 	return true;
 }
@@ -111,7 +113,7 @@ bool Game::createWindow(int width, int height) {
 	window = SDL_CreateWindow(windowTitle,
 		SDL_WINDOWPOS_CENTERED_DISPLAY(1),
 		SDL_WINDOWPOS_CENTERED_DISPLAY(1),
-		windowWidth, windowHeight, SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
+		windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (!window)
 	{
 		printf("error");
@@ -164,45 +166,64 @@ void Game::quit() {
 }
 
 void Game::eventHandler(SDL_Event &event) {
+	if (event.type == SDL_KEYDOWN) {
+		if (event.key.keysym.scancode){
+			keys::handleKeyDown(event.key.keysym.scancode);
+		}
+	}
+	if (event.type == SDL_KEYUP)
+	{
+		if(event.key.keysym.scancode) {
+			keys::handleKeyUp(event.key.keysym.scancode);
+		}
+	}
 	switch (event.type) {
-	case SDL_QUIT:
-		printf("Game was closed");
-		isRunning = false;
-		break;
-
-	case SDL_WINDOWEVENT:
-		switch (event.window.event) {
-		case SDL_WINDOWEVENT_RESIZED:
-			std::cout << "Resizing window - " << event.window.data1 << event.window.data2 << std::endl;
-			resizeWindow(event.window.data1, event.window.data2);
+		case SDL_QUIT:
+			printf("Game was closed");
+			isRunning = false;
 			break;
-		}
-		break;
 
-	case SDL_KEYDOWN:
-		switch (event.key.keysym.scancode) {
-		case SDL_SCANCODE_F:
-			/*if (currentFpsSelection == 9) {
-				currentFpsSelection = 0;
+		case SDL_WINDOWEVENT:
+			switch (event.window.event) {
+			case SDL_WINDOWEVENT_RESIZED:
+				std::cout << "Resizing window - " << event.window.data1 << event.window.data2 << std::endl;
+				resizeWindow(event.window.data1, event.window.data2);
+				break;
 			}
-			else {
-				currentFpsSelection += 1;
-			}
-			FPS = (float)fpsArray[currentFpsSelection];*/
-			//std::cout << "FPS changed to " << FPS << std::endl;
-			break;
+			
+			//switch (event.key.keysym.scancode) {
+			//	
+			//	case SDL_SCANCODE_F:
+			//		/*if (currentFpsSelection == 9) {
+			//			currentFpsSelection = 0;
+			//		}
+			//		else {
+			//			currentFpsSelection += 1;
+			//		}
+			//		FPS = (float)fpsArray[currentFpsSelection];*/
+			//		//std::cout << "FPS changed to " << FPS << std::endl;
+			//		break;
 
-		case SDL_SCANCODE_C:
-			//player.changeColour();
-			break;
+			//	case SDL_SCANCODE_C:
+			//		//player.changeColour();
+			//		break;
 
-		case SDL_SCANCODE_R:
-			//player.x = 0;
-			//player.y = 0;
-			//printf("Position reset");
-			break;
-		}
-		break;
+			//	case SDL_SCANCODE_R:
+			//		//player.x = 0;
+			//		//player.y = 0;
+			//		//printf("Position reset");
+			//		break;
+
+			//	case SDL_SCANCODE_RETURN:
+			//		chatOpen = true;
+			//		break;
+
+			//	case SDL_SCANCODE_ESCAPE:
+			//		
+			//		break;
+			//			
+			
+		//}
 	}
 }
 
@@ -258,10 +279,10 @@ auto Game::renderText(char* fontFile, int fontSize, char* text, SDL_Color colour
 }
 
 
-int Game::displayText(char* fontFile, int fontSize, char* text, int x, int y, SDL_Color colour) {
+int Game::displayText(char* fontFile, int fontSize, std::string text, int x, int y, SDL_Color colour) {
 	SDL_Texture* textTexture;
 	SDL_Rect textRect;
-	TextureObject texture = renderText(fontFile, fontSize, text, colour);
+	TextureObject texture = renderText(fontFile, fontSize, (char*)text.c_str(), colour);
 	textTexture = texture.texture;
 	if (x == -1 && y == -1) {
 		textRect.x = windowWidth / 2 - texture.width / 2;
@@ -280,4 +301,12 @@ int Game::displayText(char* fontFile, int fontSize, char* text, int x, int y, SD
 
 	return 0;
 
+}
+
+auto Game::getSystemTime(){
+	auto cur_time = std::chrono::system_clock::now();
+	std::cout << "TIME: " << std::chrono::system_clock::to_time_t(cur_time) << std::endl;
+	auto unixtime = cur_time.time_since_epoch();
+	auto unixtime_in_s = std::chrono::duration_cast<std::chrono::seconds>(unixtime);
+	return unixtime_in_s.count();
 }
