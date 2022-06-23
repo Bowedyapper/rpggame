@@ -2,16 +2,21 @@
 #include <sio_message.h>
 #include <sio_socket.h>
 extern Game gameObject;
-extern int delta;
+extern double delta;
 class Character {
 private:
 public:
 	SDL_Rect rect;
+
+	SDL_Rect imgRect;
+
 	SDL_Renderer* renderer;
 	double SPEED = 0.3;
+	int size = 50;
 	double x = 0;
 	double y = 0;
-	int size = 50;
+	
+	std::string direction;
 	int currentColour = 0;
 	std::string colourArrayLabel[4] = {
 		"White",
@@ -31,7 +36,7 @@ public:
 	Character(std::string socketId) {
 		socketid = socketId;
 		renderer = gameObject.renderer;
-		rect = { static_cast<int>(x), static_cast<int>(y), size, size };
+		rect = { 0, 0, size, size };
 
 	};
 
@@ -46,40 +51,58 @@ public:
 		std::cout << "Colour changed to " << colourArrayLabel[currentColour] << std::endl;
 	}
 
-	void pos(int xPos, int yPos) {
-		rect.x = xPos;
-		rect.y = yPos;
+	void pos(double xPos, double yPos) {
+		rect.x = (int)xPos - camera.x;
+		rect.y = (int)yPos - camera.y;
 	}
 
-	void move(std::string direction) {
-
+	bool move(std::string direction) {
 		double calc = std::ceil((1 * SPEED) * delta);
-		if (direction == "up") {
-			y -= calc;
+
+		//If the dot went too far to the left or right
+		if ((x < 0) || (x + size > LEVEL_WIDTH))
+		{
+			//Move back
+			double calc = -1;
+			return false;
+		} else if ((y < 0) || (y + size > LEVEL_HEIGHT))
+		{
+			//Move back
+			double calc = -1;
+			return false;
+		}
+		else {
+
+			if (direction == "up") {
+				y -= calc;
+			}
+
+			if (direction == "down") {
+				y += calc;
+			}
+
+			if (direction == "left") {
+				x -= calc;
+			}
+
+			if (direction == "right") {
+				x += calc;
+			}
 		}
 
-		if (direction == "down") {
-			y += calc;
-		}
+		rect.x = x - camera.x;
+		rect.y = y - camera.y;
 
-		if (direction == "left") {
-			x -= calc;
-		}
-
-		if (direction == "right") {
-			x += calc;
-		}
-
-		rect.x = (int)x;
-		rect.y = (int)y;
-
-
+		return true;
 	}
 
 	void draw() {
+
 		/* Draw the rectangle */
 		SDL_SetRenderDrawColor(renderer, colourArray[currentColour][0], colourArray[currentColour][1], colourArray[currentColour][2], colourArray[currentColour][3]);
 		SDL_RenderFillRect(renderer, &rect);
 		SDL_RenderDrawRect(renderer, &rect);
+	
+
 	};
 };
