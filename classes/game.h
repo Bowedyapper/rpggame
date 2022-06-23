@@ -120,7 +120,7 @@ bool Game::createWindow(int width, int height) {
 		throw("Error creating window: %s\n", SDL_GetError());
 		return false;
 	}
-	std::cout << hue::green << "Success" << hue::reset << std::endl;
+	std::cout << "Success" << std::endl;
 	return true;
 }
 
@@ -135,7 +135,7 @@ bool Game::createRenderer() {
 		SDL_DestroyWindow(window);
 		return false;
 	}
-	std::cout << hue::green << "Success" << hue::reset << std::endl;
+	std::cout << "Success" << std::endl;
 	SDL_RenderSetLogicalSize(renderer, windowWidth, windowHeight);
 	return true;
 }
@@ -168,13 +168,13 @@ void Game::quit() {
 void Game::eventHandler(SDL_Event &event) {
 	if (event.type == SDL_KEYDOWN) {
 		if (event.key.keysym.scancode){
-			keys::handleKeyDown(event.key.keysym.scancode);
+			//keys::handleKeyDown(event.key.keysym.scancode);
 		}
 	}
 	if (event.type == SDL_KEYUP)
 	{
 		if(event.key.keysym.scancode) {
-			keys::handleKeyUp(event.key.keysym.scancode);
+			//keys::handleKeyUp(event.key.keysym.scancode);
 		}
 	}
 	switch (event.type) {
