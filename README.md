@@ -23,7 +23,11 @@ Once finished run
 This will install the header files and libs to /usr/local/
 
 Now you should be able to build the program by running
-> ```make -B build .```
+> ```cmake -B build .```
+then cd into the build directory and run
+> ``` make```
+and finally run the program
+> ``` ./RPGGame```
 
 from the root of the directory
 
