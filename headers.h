@@ -10,7 +10,6 @@
 #include <SDL_ttf.h>
 #include "include/audio.h"
 #include "include/audio.c"
-#include <consoleColour.h>
 #include "classes/keyHandler.h"
 #include "classes/game.h"
 #include "classes/character.h"
