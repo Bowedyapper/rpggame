@@ -15,7 +15,7 @@ Install required dependencies
 > ```sudo apt install g++ make cmake libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev```
 
 Navigate to the include/socket.io-client folder and run
-> ```make .```
+> ```cmake .```
 
 Once finished run
 > ```sudo make install```
