@@ -2,7 +2,7 @@
 #include "colours.cpp"
 #include <future>
 
-typedef std::_Vector_iterator<std::_Vector_val<std::_Simple_types<Character>>> characterVectorIterator;
+typedef std::vector<Character>::iterator characterVectorIterator;
 
 std::time_t ms;
 std::vector<Character> playerVector;
@@ -10,79 +10,79 @@ std::vector<sio::message::ptr> playerChunk;
 std::string currentUserSocketId;
 sio::client client;
 
-int lastFpsUpdate = 0;
+std::chrono::steady_clock::time_point lastFpsUpdate = std::chrono::steady_clock::now();
 int fps = 0;
-
-Game *game = new Game(1280, 720, "AoTJ"); // Create game (creates window and renderer);
+auto keystates = SDL_GetKeyboardState(NULL);
+Game* game = new Game(1280, 720, "AoTJ"); // Create game (creates window and renderer);
 Character* player = new Character("player", NULL, 1539, 2076);
 
 extern const int LEVEL_WIDTH = 5832;
 extern const int LEVEL_HEIGHT = 4320;
 void movementHandler(Socket* socket) {
-	const Uint8* keystates = SDL_GetKeyboardState(NULL);
+
 	if (/*keystates[SDL_SCANCODE_LEFT] || */ keystates[SDL_SCANCODE_A]) {
-		
+
 		if (player->move("left")) {
-			sio::message::list move("l");
-			move.push(sio::double_message::create(game->delta));
-			move.push(sio::int_message::create(player->rect.x));
+			//sio::message::list move("l");
+			//move.push(sio::double_message::create(game->delta));
+			//move.push(sio::int_message::create(player->rect.x));
 			//move.push(sio::int_message::create(ms));
-			socket->emit("move", move);
+			//socket->emit("move", move);
 		}
 	}
 
 	if (/*keystates[SDL_SCANCODE_RIGHT] ||*/ keystates[SDL_SCANCODE_D]) {
-		
+
 		if (player->move("right")) {
-			sio::message::list move("r");
-			move.push(sio::double_message::create(game->delta));
-			move.push(sio::int_message::create(player->rect.x));
+			//sio::message::list move("r");
+			//move.push(sio::double_message::create(game->delta));
+			//move.push(sio::int_message::create(player->rect.x));
 			//move.push(sio::int_message::create(ms));
-			socket->emit("move", move);
+			//socket->emit("move", move);
 		}
 
 	}
 
 	if (/*keystates[SDL_SCANCODE_UP] ||*/ keystates[SDL_SCANCODE_W]) {
-		
+
 		if (player->move("up")) {
-			sio::message::list move("u");
-			move.push(sio::double_message::create(game->delta));
-			move.push(sio::int_message::create(player->rect.y));
+			//sio::message::list move("u");
+			//move.push(sio::double_message::create(game->delta));
+			//move.push(sio::int_message::create(player->rect.y));
 			//move.push(sio::int_message::create(ms));
-			socket->emit("move", move);
+			//socket->emit("move", move);
 		}
 	}
 
 	if (/*keystates[SDL_SCANCODE_DOWN] ||*/ keystates[SDL_SCANCODE_S]) {
-		
+
 		if (player->move("down")) {
-			sio::message::list move("d");
-			move.push(sio::double_message::create(game->delta));
-			move.push(sio::int_message::create(player->rect.y));
+			//sio::message::list move("d");
+			//move.push(sio::double_message::create(game->delta));
+			//move.push(sio::int_message::create(player->rect.y));
 			//move.push(sio::int_message::create(ms));
-			socket->emit("move", move);
+			//socket->emit("move", move);
 		}
 	}
 
 
 	// Camera movement (Arrow keys)
-	if (keystates[SDL_SCANCODE_UP]) {
-		player->camera.y += (-1 * 0.2) * game->delta;
+	// if (keystates[SDL_SCANCODE_UP]) {
+	// 	player->camera.y += (-1 * 0.2) * game->delta;
 
-	}
+	// }
 
-	if (keystates[SDL_SCANCODE_DOWN]) {
-		player->camera.y += (1 * 0.2) * game->delta;
-	}
+	// if (keystates[SDL_SCANCODE_DOWN]) {
+	// 	player->camera.y += (1 * 0.2) * game->delta;
+	// }
 
-	if (keystates[SDL_SCANCODE_LEFT]) {
-		player->camera.x += (-1 * 0.2) * game->delta;
-	}
+	// if (keystates[SDL_SCANCODE_LEFT]) {
+	// 	player->camera.x += (-1 * 0.2) * game->delta;
+	// }
 
-	if (keystates[SDL_SCANCODE_RIGHT]) {
-		player->camera.x += (1 * 0.2) * game->delta;
-	}
+	// if (keystates[SDL_SCANCODE_RIGHT]) {
+	// 	player->camera.x += (1 * 0.2) * game->delta;
+	// }
 }
 
 void gameChunkUpdate(sio::event& evnt) {
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
 	if (!load) {
 		std::cout << "Error loading textures" << std::endl;
 	}
-	
+
 	// Get textures from VRAM and give pointers
 	TextureObject charTexture = game->mainTextures.getTexture("player");
 	TextureObject mapT = game->mainTextures.getTexture("map");
@@ -162,22 +162,23 @@ int main(int argc, char* argv[]) {
 	player->applyTexture(charTexture.texture); // Copy texture to player rect
 
 	playMusic("assets/audio/audio.wav", 5);
-	
-	
+
+
 	// Socket connection-y stuff
 	Socket socket("http://178.128.38.39:4545"); // Connects to server
 	socket.emit("user_wants_connection"); // Tell server we want to connect
 
 	socket.on("user_got_connected", &onConnection); // Handle connection success
-	//socket.on("game_chunk_update", &gameChunkUpdate); // Handle game chunk updates
+	socket.on("game_chunk_update", &gameChunkUpdate); // Handle game chunk updates
 	socket.on("user_disconnect", &handleUserDisconnect); // Handle remote user DC's
-	
+
 	// Main game loop
 	while (game->isRunning) {
-
+		keystates = SDL_GetKeyboardState(NULL);
 		// Update FPS counter every 1s
-		if (clock() - lastFpsUpdate > 1000) {
-			lastFpsUpdate = clock();
+		double timeSinceLastFpsUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastFpsUpdate).count();
+		if (timeSinceLastFpsUpdate > 1000) {
+			lastFpsUpdate = std::chrono::steady_clock::now();
 			fps = game->calcFps();
 		}
 
@@ -186,7 +187,7 @@ int main(int argc, char* argv[]) {
 		game->pollEvents(); // poll events (mouse, keys etc)
 		game->calculateDeltaTime(); // calculate delta since last frame
 		game->clearScreen(); // clear whole screen
-	
+
 
 		player->camera.x = (player->x + player->size / 2) - (game->windowWidth / 2);
 		player->camera.y = (player->y + player->size / 2) - (game->windowHeight / 2);
@@ -207,10 +208,10 @@ int main(int argc, char* argv[]) {
 			player->camera.y = LEVEL_HEIGHT - player->camera.h;
 		}
 
-		
+
 		game->clipRenderTexture(mapT.texture, NULL, NULL, 0, 0, &player->camera);
-		
-		//drawRemotePlayers();
+
+		drawRemotePlayers();
 		player->draw();
 
 		std::string mousePos = "Mouse Position - X: " + std::to_string(game->mousePosX) + " Y: " + std::to_string(game->mousePosY);
@@ -228,7 +229,6 @@ int main(int argc, char* argv[]) {
 		game->displayText("assets/font/font.ttf", game->windowHeight * 0.02, latencyText, 1, 75, black);
 
 		game->render(); // present everything to the renderer
-
 	}
 	return 0;
 }
