@@ -1,4 +1,8 @@
 ﻿cmake_minimum_required(VERSION 3.8)
+set(CMAKE_CXX_STANDARD 17)
+if(POLICY CMP0025)
+    cmake_policy(SET CMP0052 NEW)
+endif()
 
 project(RPGGame)
 
