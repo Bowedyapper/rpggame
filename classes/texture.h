@@ -18,19 +18,19 @@ class TextureCache{
 public:
 	std::map<std::string, TextureObject> cache;
 	std::map<std::string, TextureObject>::iterator cacheIterator;
-	bool loadTexture(char* name, char* filePath);
-	void assignRenderer(SDL_Renderer* rendererPtr);
-	TextureObject getTexture(std::string textureName);
+	bool loadTexture(const char *name, const char *filePath);
+	void assignRenderer(SDL_Renderer *rendererPtr);
+	TextureObject getTexture(const char *textureName);
 	bool unloadTexture(std::string textureName);
 	SDL_Renderer* renderer;
 private:
-	SDL_Surface* loadImg(char* filePath);
+	SDL_Surface* loadImg(const char* filePath);
 	TextureObject createTextureFromSurface(SDL_Surface* surface);
 };
 
 
 
-SDL_Surface* TextureCache::loadImg(char* filePath) {
+SDL_Surface* TextureCache::loadImg(const char *filePath) {
 	SDL_Surface* surface = IMG_Load(filePath);
 	std::cout << "Trying to load image " << filePath << std::endl;
 	return surface;
@@ -43,7 +43,7 @@ TextureObject TextureCache::createTextureFromSurface(SDL_Surface* surface) {
 	return texture;
 }
 
-bool TextureCache::loadTexture(char* name, char* filePath) {
+bool TextureCache::loadTexture(const char* name, const char *filePath) {
 	SDL_Surface* surface = loadImg(filePath);
 	if (!surface) {
 		std::cerr << "Could not load image at " << filePath << std::endl;
@@ -79,11 +79,11 @@ void TextureCache::assignRenderer(SDL_Renderer* rendererPtr) {
 	renderer = rendererPtr;
 }
 
-TextureObject TextureCache::getTexture(std::string textureName) {
+TextureObject TextureCache::getTexture(const char *textureName) {
 	
 	if (cache.find(textureName) == cache.end()) {
 		std::cerr << "Could not find texture \"" << textureName << "\" in texture cache" << std::endl;
-		return TextureObject(NULL, NULL, NULL);
+		return TextureObject(NULL, 1, 1);
 	}
 	else {
 		std::cout << "Found texture with name \"" << textureName << "\"" << std::endl;
