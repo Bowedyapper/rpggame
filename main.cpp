@@ -11,8 +11,9 @@ std::string currentUserSocketId;
 sio::client client;
 
 std::chrono::steady_clock::time_point lastFpsUpdate = std::chrono::steady_clock::now();
-int fps = 0;
+double fps = 0;
 auto keystates = SDL_GetKeyboardState(NULL);
+
 Game* game = new Game(1280, 720, "AoTJ"); // Create game (creates window and renderer);
 Character* player = new Character("player", NULL, 1539, 2076);
 
@@ -91,8 +92,8 @@ void gameChunkUpdate(sio::event& evnt) {
 
 	for (int ii = 0; ii < playerChunkSize; ii++) {
 		std::string user = evnt.get_message()->get_vector()[ii]->get_map()["socketid"]->get_string();
-		int x = evnt.get_message()->get_vector()[ii]->get_map()["x"]->get_int();
-		int y = evnt.get_message()->get_vector()[ii]->get_map()["y"]->get_int();
+		float x = (float)evnt.get_message()->get_vector()[ii]->get_map()["x"]->get_double();
+		float y = (float)evnt.get_message()->get_vector()[ii]->get_map()["y"]->get_double();
 
 		if (user != currentUserSocketId) {
 			characterVectorIterator findUser = find_if(playerVector.begin(), playerVector.end(), [&user](const Character obj) {return obj.socketid == user; });
@@ -144,8 +145,8 @@ bool loadTextures() {
 int main(int argc, char* argv[]) {
 
 	// TODO: Need to figure out why this will not work correctly in the init funciton within the game class
-	SDL_Init(SDL_INIT_AUDIO);
-	initAudio();
+	//SDL_Init(SDL_INIT_AUDIO);
+	//initAudio();
 
 	// Load the game textures, will be seperated per scene so we only load what is needed
 	bool load = loadTextures();
@@ -161,7 +162,7 @@ int main(int argc, char* argv[]) {
 
 	player->applyTexture(charTexture.texture); // Copy texture to player rect
 
-	playMusic("assets/audio/audio.wav", 5);
+	//playMusic("assets/audio/audio.wav", 5);
 
 
 	// Socket connection-y stuff
@@ -173,62 +174,75 @@ int main(int argc, char* argv[]) {
 	socket.on("user_disconnect", &handleUserDisconnect); // Handle remote user DC's
 
 	// Main game loop
+	unsigned int a;
+	unsigned int b = SDL_GetTicks();
+	double d;
 	while (game->isRunning) {
-		keystates = SDL_GetKeyboardState(NULL);
-		// Update FPS counter every 1s
-		double timeSinceLastFpsUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastFpsUpdate).count();
-		if (timeSinceLastFpsUpdate > 1000) {
-			lastFpsUpdate = std::chrono::steady_clock::now();
-			fps = game->calcFps();
-		}
-
-		socket.checkLatency(5000);
-		movementHandler(&socket);
 		game->pollEvents(); // poll events (mouse, keys etc)
-		game->calculateDeltaTime(); // calculate delta since last frame
-		game->clearScreen(); // clear whole screen
+		keystates = SDL_GetKeyboardState(NULL);
+		a = SDL_GetTicks();
+		d = a - b;
+		
+		if (d > 1000/64.0){
+			b = a;
+		
+			game->calculateDeltaTime(); // calculate delta since last frame
+			//Update FPS counter every 1s
+			auto timeSinceLastFpsUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastFpsUpdate).count();
+			if (timeSinceLastFpsUpdate > 1000) {
+				lastFpsUpdate = std::chrono::steady_clock::now();
+				fps = game->calcFps();
+			}
+
+			socket.checkLatency(5000);
+			movementHandler(&socket);
+			
+			
+			game->clearScreen(); // clear whole screen
 
 
-		player->camera.x = (player->x + player->size / 2) - (game->windowWidth / 2);
-		player->camera.y = (player->y + player->size / 2) - (game->windowHeight / 2);
-		if (player->camera.x < 0)
-		{
-			player->camera.x = 0;
+			player->camera.x = ((int)player->x + (int)player->size / 2) - (game->windowWidth / 2);
+			player->camera.y = ((int)player->y + (int)player->size / 2) - (game->windowHeight / 2);
+			if (player->camera.x < 0)
+			{
+				player->camera.x = 0;
+			}
+			if (player->camera.y < 0)
+			{
+				player->camera.y = 0;
+			}
+			if (player->camera.x > LEVEL_WIDTH - player->camera.w)
+			{
+				player->camera.x = LEVEL_WIDTH - player->camera.w;
+			}
+			if (player->camera.y > LEVEL_HEIGHT - player->camera.h)
+			{
+				player->camera.y = LEVEL_HEIGHT - player->camera.h;
+			}
+
+
+			game->clipRenderTexture(mapT.texture, NULL, NULL, 0, 0, &player->camera);
+
+			drawRemotePlayers();
+			player->draw();
+
+			std::string mousePos = "Mouse Position - X: " + std::to_string(game->mousePosX) + " Y: " + std::to_string(game->mousePosY);
+			std::string charPos = "Character Position - X: " + std::to_string(player->x) + " Y: " + std::to_string(player->y);
+			std::string camPos = "Camera Position - X: " + std::to_string(player->camera.x) + " Y: " + std::to_string(player->camera.y);
+			std::string fpsText = "FPS: " + std::to_string(fps);
+			std::string chatOpenText = "ChatOpen: " + std::to_string(game->chatOpen);
+			std::string latencyText = "Latency: " + std::to_string(socket.latency) + "ms";
+
+			const char *font = "assets/font/font.ttf";
+			game->displayText(font, (float)game->windowHeight * 0.02f, charPos, 1, 15, black);
+			game->displayText(font, (float)game->windowHeight * 0.02f, mousePos, 1, 1, black);
+			game->displayText(font, (float)game->windowHeight * 0.02f, camPos, 1, 30, black);
+			game->displayText(font, (float)game->windowHeight * 0.02f, fpsText, 1, 45, black);
+			game->displayText(font, (float)game->windowHeight * 0.02f, chatOpenText, 1, 60, black);
+			game->displayText(font, (float)game->windowHeight * 0.02f, latencyText, 1, 75, black);
+
+			game->render(); // present everything to the renderer
 		}
-		if (player->camera.y < 0)
-		{
-			player->camera.y = 0;
-		}
-		if (player->camera.x > LEVEL_WIDTH - player->camera.w)
-		{
-			player->camera.x = LEVEL_WIDTH - player->camera.w;
-		}
-		if (player->camera.y > LEVEL_HEIGHT - player->camera.h)
-		{
-			player->camera.y = LEVEL_HEIGHT - player->camera.h;
-		}
-
-
-		game->clipRenderTexture(mapT.texture, NULL, NULL, 0, 0, &player->camera);
-
-		drawRemotePlayers();
-		player->draw();
-
-		std::string mousePos = "Mouse Position - X: " + std::to_string(game->mousePosX) + " Y: " + std::to_string(game->mousePosY);
-		std::string charPos = "Character Position - X: " + std::to_string(player->x) + " Y: " + std::to_string(player->y);
-		std::string camPos = "Camera Position - X: " + std::to_string(player->camera.x) + " Y: " + std::to_string(player->camera.y);
-		std::string fpsText = "FPS: " + std::to_string(fps);
-		std::string chatOpenText = "ChatOpen: " + std::to_string(game->chatOpen);
-		std::string latencyText = "Latency: " + std::to_string(socket.latency) + "ms";
-
-		game->displayText("assets/font/font.ttf", game->windowHeight * 0.02, mousePos, 1, 1, black);
-		game->displayText("assets/font/font.ttf", game->windowHeight * 0.02, charPos, 1, 15, black);
-		game->displayText("assets/font/font.ttf", game->windowHeight * 0.02, camPos, 1, 30, black);
-		game->displayText("assets/font/font.ttf", game->windowHeight * 0.02, fpsText, 1, 45, black);
-		game->displayText("assets/font/font.ttf", game->windowHeight * 0.02, chatOpenText, 1, 60, black);
-		game->displayText("assets/font/font.ttf", game->windowHeight * 0.02, latencyText, 1, 75, black);
-
-		game->render(); // present everything to the renderer
 	}
 	return 0;
 }

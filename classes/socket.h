@@ -9,8 +9,8 @@ public:
 	std::chrono::steady_clock::time_point lastLatencyCheck = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point lastLatencyPacketSent = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point lastLatencyPacketRecieved = std::chrono::steady_clock::now();
-	int latency = 0;
-	Socket(char* socketHost) {
+	int64_t latency = 0;
+	Socket(const char* socketHost) {
 		lastLatencyCheck = std::chrono::steady_clock::now();
 		client.connect(socketHost);
 		on("latency_response", [&](sio::event& ev) {
@@ -24,11 +24,11 @@ public:
 	void checkLatency(int interval);
 private:
 	sio::client client;
-	bool connect(char* socketHost);
+	bool connect(const char* socketHost);
 
 };
 
-bool Socket::connect(char* socketHost) {
+bool Socket::connect(const char* socketHost) {
 	client.connect(socketHost);
 	return true;
 }
@@ -43,7 +43,7 @@ void Socket::emit(std::string const& name, sio::message::list const& msglist = N
 }
 
 void Socket::checkLatency(int interval) {
-	double elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastLatencyCheck).count();
+	int64_t elapsed_time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastLatencyCheck).count();
 	if (elapsed_time > interval) {
 		emit("latency_check");
 		lastLatencyPacketSent = std::chrono::steady_clock::now();
