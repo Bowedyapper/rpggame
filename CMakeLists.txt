@@ -4,7 +4,7 @@ project(RPGGame)
 
 
 add_executable(${PROJECT_NAME} "main.cpp")
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+
 IF (WIN32)
     set(SDL2_PATH "G:/cpp_libs/SDL2-2.0.22" CACHE BOOL "" FORCE)
     set(SDL2_TTF_PATH "G:/cpp_libs/SDL2_ttf-2.0.18" CACHE BOOL "" FORCE)
@@ -23,7 +23,7 @@ ELSE()
     target_link_libraries(${PROJECT_NAME} sioclient)
 ENDIF()
 
-
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
 # Find and link SDL2
 find_package(SDL2 REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
