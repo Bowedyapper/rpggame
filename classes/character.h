@@ -3,10 +3,10 @@ struct Character {
 private:
 public:
 
-	double SPEED = 0.2;
-	int size = 50;
-	int x;
-	int y;
+	double SPEED = 50;
+	double size = 50;
+	double x;
+	double y;
 
 	double delta;
 
@@ -74,7 +74,8 @@ void Character::pos(int xPos, int yPos) {
 }
 
 bool Character::move(std::string direction) {
-	int calc = (int)std::round(std::ceil((1 * SPEED) * game->delta));
+	double calc = (double)(game->delta / 256) * SPEED;
+	std::cout << calc << std::endl;
 	//If the player went too far to the left or right
 	if ((x < 0) || (x + size > 6336))
 	{
