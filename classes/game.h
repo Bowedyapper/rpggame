@@ -56,10 +56,10 @@ public:
 	double calculateDeltaTime();
 	double calcFps();
 	void pollEvents();
-	int clipRenderTexture(SDL_Texture* texture, int w, int h, double x, double y, SDL_Rect* clip);
+	int clipRenderTexture(SDL_Texture* texture, float w, float h, float x, float y, SDL_Rect* clip);
 
-	auto renderText(const char* fontFile, int fontSize, const char* text, SDL_Color colour);
-	int displayText(const char* fontFile, int fontSize, std::string text, double x, double y, SDL_Color colour);
+	auto renderText(const char* fontFile, float fontSize, const char* text, SDL_Color colour);
+	int displayText(const char* fontFile, float fontSize, std::string text, float x, float y, SDL_Color colour);
 	auto getSystemTime();
 
 };
@@ -109,7 +109,7 @@ bool Game::createWindow(int width, int height) {
 	windowHeight = height;
 	
 	printf("Creating %d x %d window..", width, height);
-	SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl");
+	//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl"); // May need to be enabled for UNIX systems
 	window = SDL_CreateWindow(windowTitle,
 		SDL_WINDOWPOS_CENTERED_DISPLAY(1),
 		SDL_WINDOWPOS_CENTERED_DISPLAY(1),
@@ -152,7 +152,7 @@ void Game::resizeWindow(int w, int h) {
 }
 
 void Game::clearScreen(int r, int g, int b, int alpha) {
-	SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+	SDL_SetRenderDrawColor(renderer, r, g, b, alpha);
 	SDL_RenderClear(renderer);
 }
 
@@ -246,27 +246,27 @@ void Game::pollEvents() {
 	}
 }
 
-int Game::clipRenderTexture(SDL_Texture* texture, int w, int h, double x, double y, SDL_Rect* clip) {
-	SDL_Rect textureRect;
-	textureRect.x = (int)x;
-	textureRect.y = (int)y;
+int Game::clipRenderTexture(SDL_Texture* texture, float w, float h, float x, float y, SDL_Rect* clip) {
+	SDL_FRect textureRect;
+	textureRect.x = x;
+	textureRect.y = y;
 
 	if (clip != NULL)
 	{
-		textureRect.w = (int)clip->w;
-		textureRect.h = (int)clip->h;
+		textureRect.w = (float)clip->w;
+		textureRect.h = (float)clip->h;
 	}
 	else {
 		textureRect.w = w;
 		textureRect.h = h;
 	}
-	return SDL_RenderCopyEx(renderer, texture, clip, &textureRect, NULL, NULL, SDL_FLIP_NONE);
+	return SDL_RenderCopyExF(renderer, texture, clip, &textureRect, NULL, NULL, SDL_FLIP_NONE);
 }
 
-auto Game::renderText(const char* fontFile, int fontSize, const char* text, SDL_Color colour) {
+auto Game::renderText(const char* fontFile, float fontSize, const char* text, SDL_Color colour) {
 	SDL_Surface* textSurface;
 	SDL_Texture* textTexture;
-	auto font = TTF_OpenFont(fontFile, fontSize);
+	auto font = TTF_OpenFont(fontFile, (int)fontSize);
 	textSurface = TTF_RenderText_Blended_Wrapped(font, text, colour, 0);
 	textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 	TTF_CloseFont(font);
@@ -279,24 +279,24 @@ auto Game::renderText(const char* fontFile, int fontSize, const char* text, SDL_
 }
 
 
-int Game::displayText(const char* fontFile, int fontSize, std::string text, double x, double y, SDL_Color colour) {
+int Game::displayText(const char* fontFile, float fontSize, std::string text, float x, float y, SDL_Color colour) {
 	SDL_Texture* textTexture;
-	SDL_Rect textRect;
+	SDL_FRect textRect;
 	TextureObject texture = renderText(fontFile, fontSize, text.c_str(), colour);
 	textTexture = texture.texture;
 	if (x == -1 && y == -1) {
-		textRect.x = windowWidth / 2 - texture.width / 2;
-		textRect.y = windowHeight / 2 - texture.height / 2;;
+		textRect.x = (float)windowWidth / 2 - texture.width / 2;
+		textRect.y = (float)windowHeight / 2 - texture.height / 2;;
 	}
 	else {
 		textRect.x = x;
 		textRect.y = y;
 	}
 
-	textRect.w = texture.width;
-	textRect.h = texture.height;
+	textRect.w = (float)texture.width;
+	textRect.h = (float)texture.height;
 
-	SDL_RenderCopy(renderer, texture.texture, NULL, &textRect);
+	SDL_RenderCopyF(renderer, texture.texture, NULL, &textRect);
 	SDL_DestroyTexture(texture.texture);
 
 	return 0;

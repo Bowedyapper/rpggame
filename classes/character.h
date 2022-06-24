@@ -3,16 +3,16 @@ struct Character {
 private:
 public:
 
-	double SPEED = 50;
-	double size = 50;
-	double x;
-	double y;
+	float SPEED = 50;
+	float size = 50;
+	float x;
+	float y;
 
-	double delta;
+	float delta;
 
 	SDL_Renderer* renderer;
 	SDL_Texture* charTexture;
-	SDL_Rect rect = { x, y, size, size };
+	SDL_FRect rect = { x, y, size, size };
 	SDL_Rect camera = { 1400, 1900, game->windowWidth, game->windowHeight };
 	SDL_Rect imgRect;
 
@@ -35,7 +35,7 @@ public:
 	   {69, 3, 252, 255}
 	};
 
-	Character(std::string socketId = "player", SDL_Texture* charTex = nullptr, int xPos = 0, int yPos = 0) {
+	Character(std::string socketId = "player", SDL_Texture* charTex = nullptr, float xPos = 0, float yPos = 0) {
 		renderer = game->renderer;
 		socketid = socketId;
 		charTexture = charTex;
@@ -47,7 +47,7 @@ public:
 	};
 
 	void changeColour();
-	void pos(int xPos, int yPos);
+	void pos(float xPos, float yPos);
 	bool move(std::string direction);
 	void draw();
 	void drawRemote(SDL_Rect playerCamera);
@@ -66,7 +66,7 @@ void Character::changeColour() {
 	std::cout << "Colour changed to " << colourArrayLabel[currentColour] << std::endl;
 }
 
-void Character::pos(int xPos, int yPos) {
+void Character::pos(float xPos, float yPos) {
 	x = xPos;
 	y = yPos;
 	rect.x = xPos - camera.x;
@@ -74,7 +74,7 @@ void Character::pos(int xPos, int yPos) {
 }
 
 bool Character::move(std::string direction) {
-	double calc = (double)(game->delta / 256) * SPEED;
+	float calc = (float)(game->delta / 256) * SPEED;
 	std::cout << calc << std::endl;
 	//If the player went too far to the left or right
 	if ((x < 0) || (x + size > 6336))
@@ -118,13 +118,13 @@ void Character::drawRemote(SDL_Rect playerCamera) {
 	rect.x = (x - playerCamera.x);
 	rect.y = (y - playerCamera.y);
 	if (charTexture) {
-		SDL_RenderCopyEx(renderer, charTexture, NULL, &rect, NULL, NULL, facingDirection);
+		SDL_RenderCopyExF(renderer, charTexture, NULL, &rect, NULL, NULL, facingDirection);
 		//SDL_RenderCopy(renderer, charTexture, NULL, &rect);
 	}
 	else {
 		SDL_SetRenderDrawColor(renderer, colourArray[currentColour][0], colourArray[currentColour][1], colourArray[currentColour][2], colourArray[currentColour][3]);
-		SDL_RenderFillRect(renderer, &rect);
-		SDL_RenderDrawRect(renderer, &rect);
+		SDL_RenderFillRectF(renderer, &rect);
+		SDL_RenderDrawRectF(renderer, &rect);
 	}
 }
 
@@ -134,13 +134,13 @@ void Character::draw() {
 	/* Draw the rectangle */
 
 	if (charTexture) {
-		SDL_RenderCopyEx(renderer, charTexture, NULL, &rect, NULL, NULL, facingDirection);
+		SDL_RenderCopyExF(renderer, charTexture, NULL, &rect, NULL, NULL, facingDirection);
 		//SDL_RenderCopy(renderer, charTexture, NULL, &rect);
 	}
 	else {
 		SDL_SetRenderDrawColor(renderer, colourArray[currentColour][0], colourArray[currentColour][1], colourArray[currentColour][2], colourArray[currentColour][3]);
-		SDL_RenderFillRect(renderer, &rect);
-		SDL_RenderDrawRect(renderer, &rect);
+		SDL_RenderFillRectF(renderer, &rect);
+		SDL_RenderDrawRectF(renderer, &rect);
 	}
 };
 
