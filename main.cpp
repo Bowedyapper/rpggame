@@ -178,7 +178,6 @@ int main(int argc, char* argv[]) {
 	unsigned int b = SDL_GetTicks();
 	double d;
 	while (game->isRunning) {
-		printf("lol");
 		game->pollEvents(); // poll events (mouse, keys etc)
 		keystates = SDL_GetKeyboardState(NULL);
 		a = SDL_GetTicks();
