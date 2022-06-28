@@ -1,24 +1,30 @@
-﻿#include "headers.h"
-#include "colours.cpp"
-#include <future>
+﻿/*****************************************************************//**
+ * \file   main.cpp
+ * \brief  Contains the main game logic and loop
+ * 
+ * \author Jason Hewitt <bowedyapper@live.co.uk>
+ * \date   June 2022
+ *********************************************************************/
+
+#include "headers.h"
 
 typedef std::vector<Character>::iterator characterVectorIterator;
 
-std::time_t ms;
 std::vector<Character> playerVector;
 std::vector<sio::message::ptr> playerChunk;
 std::string currentUserSocketId;
-sio::client client;
 
 std::chrono::steady_clock::time_point lastFpsUpdate = std::chrono::steady_clock::now();
-double fps = 0;
+double currentCalculatedFrameRate = 0;
+double gameFrameRate = 60.00;
+extern const int levelWidth = 5832;
+extern const int levelHeight = 4320;
 auto keystates = SDL_GetKeyboardState(NULL);
 
-Game* game = new Game(1280, 720, "AoTJ"); // Create game (creates window and renderer);
+Game* game = new Game(1280, 720, "RPGGame"); // Create game (creates window and renderer);
 Character* player = new Character("player", NULL, 1539, 2076);
 
-extern const int LEVEL_WIDTH = 5832;
-extern const int LEVEL_HEIGHT = 4320;
+
 void movementHandler(Socket* socket) {
 
 	if (/*keystates[SDL_SCANCODE_LEFT] || */ keystates[SDL_SCANCODE_A]) {
@@ -183,7 +189,7 @@ int main(int argc, char* argv[]) {
 		a = SDL_GetTicks();
 		d = a - b;
 		
-		if (d > 1000/64.0){
+		if (d > 1000/gameFrameRate){
 			b = a;
 		
 			game->calculateDeltaTime(); // calculate delta since last frame
@@ -191,7 +197,7 @@ int main(int argc, char* argv[]) {
 			auto timeSinceLastFpsUpdate = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - lastFpsUpdate).count();
 			if (timeSinceLastFpsUpdate > 1000) {
 				lastFpsUpdate = std::chrono::steady_clock::now();
-				fps = game->calcFps();
+				currentCalculatedFrameRate = game->calcFps();
 			}
 
 			socket.checkLatency(5000);
@@ -211,13 +217,13 @@ int main(int argc, char* argv[]) {
 			{
 				player->camera.y = 0;
 			}
-			if (player->camera.x > LEVEL_WIDTH - player->camera.w)
+			if (player->camera.x > levelWidth - player->camera.w)
 			{
-				player->camera.x = LEVEL_WIDTH - player->camera.w;
+				player->camera.x = levelWidth - player->camera.w;
 			}
-			if (player->camera.y > LEVEL_HEIGHT - player->camera.h)
+			if (player->camera.y > levelHeight - player->camera.h)
 			{
-				player->camera.y = LEVEL_HEIGHT - player->camera.h;
+				player->camera.y = levelHeight - player->camera.h;
 			}
 
 
@@ -229,7 +235,7 @@ int main(int argc, char* argv[]) {
 			std::string mousePos = "Mouse Position - X: " + std::to_string(game->mousePosX) + " Y: " + std::to_string(game->mousePosY);
 			std::string charPos = "Character Position - X: " + std::to_string(player->x) + " Y: " + std::to_string(player->y);
 			std::string camPos = "Camera Position - X: " + std::to_string(player->camera.x) + " Y: " + std::to_string(player->camera.y);
-			std::string fpsText = "FPS: " + std::to_string(fps);
+			std::string fpsText = "FPS: " + std::to_string(currentCalculatedFrameRate);
 			std::string chatOpenText = "ChatOpen: " + std::to_string(game->chatOpen);
 			std::string latencyText = "Latency: " + std::to_string(socket.latency) + "ms";
 
