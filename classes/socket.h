@@ -1,9 +1,9 @@
 /*****************************************************************//**
  * \file   socket.h
  * \brief  Creates a socket instance with the socket server and allows
- * 		   for slightly easier usage instead of using the socket.io
- * 		   library as is, I wanted to add my own methods to the socket
- * 		   instance for convience.
+ *         for slightly easier usage instead of using the socket.io
+ *         library as is, I wanted to add my own methods to the socket
+ *         instance for convience.
  * 
  * \author Jason Hewitt <bowedyapper@live.co.uk>
  * \date   June 2022
