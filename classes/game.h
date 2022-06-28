@@ -15,6 +15,12 @@ private:
 	
 	const char* windowTitle;
 
+	/**
+	 * \brief 
+	 * 
+	 * \return true if init was successful
+	 * \return false if init threw and error
+	 */
 	bool init();
 	bool createWindow(int width, int height);
 	bool createRenderer();
@@ -36,7 +42,6 @@ public:
 	SDL_Renderer* renderer;
 	TextureCache mainTextures;
 	
-	Game() {}
 	Game(int windowWidth, int windowHeight, const char* title){
 		init();
 		windowTitle = title;

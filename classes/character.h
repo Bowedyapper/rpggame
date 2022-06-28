@@ -1,5 +1,16 @@
+/*****************************************************************//**
+ * \file   character.h
+ * \brief  Creates a player object and stores current x, y coordinates
+ * 		   size, speed, texture and also handles player movement.
+ * 		   This class is also used for rendering and positioning of
+ * 		   remote players
+ * 
+ * \author Jason Hewitt <bowedyapper@live.co.uk>
+ * \date   June 2022
+ *********************************************************************/
+
 extern Game *game;
-struct Character {
+class Character {
 private:
 public:
 
@@ -75,7 +86,7 @@ void Character::pos(float xPos, float yPos) {
 
 bool Character::move(std::string direction) {
 	float calc = (float)std::round((game->delta / 256) * SPEED);
-	std::cout << calc << std::endl;
+
 	//If the player went too far to the left or right
 	if ((x < 0) || (x + size > 6336))
 	{
