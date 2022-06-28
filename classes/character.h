@@ -74,7 +74,7 @@ void Character::pos(float xPos, float yPos) {
 }
 
 bool Character::move(std::string direction) {
-	float calc = (float)(game->delta / 256) * SPEED;
+	float calc = (float)std::round((game->delta / 256) * SPEED);
 	std::cout << calc << std::endl;
 	//If the player went too far to the left or right
 	if ((x < 0) || (x + size > 6336))
