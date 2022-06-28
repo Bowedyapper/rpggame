@@ -1,15 +1,16 @@
 ﻿cmake_minimum_required(VERSION 3.8)
 set(CMAKE_CXX_STANDARD 17)
+
 if(POLICY CMP0025)
     cmake_policy(SET CMP0052 NEW)
 endif()
 
 project(RPGGame)
 
-
 add_executable(${PROJECT_NAME} "main.cpp")
 
 IF (WIN32)
+    # Need to manually set a path for each library for Windows at the moment until I can create a script that finds it automatically
     set(SDL2_PATH "G:/cpp_libs/SDL2-2.0.22" CACHE BOOL "" FORCE)
     set(SDL2_TTF_PATH "G:/cpp_libs/SDL2_ttf-2.0.18" CACHE BOOL "" FORCE)
     set(SDL2_IMAGE_PATH "G:/cpp_libs/SDL2_image-2.0.5" CACHE BOOL "" FORCE)
@@ -28,6 +29,7 @@ ELSE()
 ENDIF()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
+
 # Find and link SDL2
 find_package(SDL2 REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_INCLUDE_DIRS})
@@ -43,10 +45,6 @@ find_package(SDL2_ttf REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${SDL2_TTF_INCLUDE_DIRS})
 target_link_libraries(${PROJECT_NAME} ${SDL2_TTF_LIBRARIES})
 
-
-
-
-MESSAGE(${SDL2_INCLUDE_DIRS})
 add_custom_target(copy_assets
     COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/assets_to_be_copied ${CMAKE_CURRENT_BINARY_DIR}
 )
