@@ -17,12 +17,12 @@ std::string currentUserSocketId;
 std::chrono::steady_clock::time_point lastFpsUpdate = std::chrono::steady_clock::now();
 double currentCalculatedFrameRate = 0;
 double gameFrameRate = 60.00;
-extern const int levelWidth = 5832;
-extern const int levelHeight = 4320;
+extern const int levelWidth = 4320;
+extern const int levelHeight = 3360;
 auto keystates = SDL_GetKeyboardState(NULL);
 
 Game* game = new Game(1280, 720, "RPGGame"); // Create game (creates window and renderer);
-Character* player = new Character("player", NULL, 1539, 2076);
+Character* player = new Character("player", NULL, 1064, 1534);
 
 
 void movementHandler(Socket* socket) {
