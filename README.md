@@ -5,14 +5,17 @@ Built with SDL2 and Socket.io
 
 ---
 
-## Compiling on linux
+## Compiling on unix systems
 Clone this repo and then run
 > ``` git submodule update --init --recursive```
 
 This will download the submodules needed to build the program.
 
-Install required dependencies 
+Install required dependencies (Linux)
 > ```sudo apt install g++ make cmake libsdl2-dev libsdl2-ttf-dev libsdl2-image-dev```
+
+Install required dependencies (Mac)
+> ```brew install cmake make SDL2 SDL2_image SDL2_ttf```
 
 Navigate to the include/socket.io-client folder and run
 > ```cmake .```
