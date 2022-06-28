@@ -1,10 +1,10 @@
 /*****************************************************************//**
- * \file   headers.h
- * \brief  Contains all the needed header files and libraries to compile
+ * @file   headers.h
+ * @brief  Contains all the needed header files and libraries to compile
  *         and run this project
  * 
- * \author Jason Hewitt <bowedyapper@live.co.uk>
- * \date   June 2022
+ * @author Jason Hewitt <bowedyapper@live.co.uk>
+ * @date   June 2022
  *********************************************************************/
 
 #include <iostream>

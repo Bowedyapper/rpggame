@@ -1,11 +1,11 @@
 /*****************************************************************//**
- * \file   texture.h
- * \brief  This file handles texture creation, caching in VRAM and 
+ * @file   texture.h
+ * @brief  This file handles texture creation, caching in VRAM and 
  * 		   freeing textures from memory, Textures are stored in a map 
  * 		   as an object containing the texture pointer, width and height
  * 
- * \author Jason Hewitt <bowedyapper@live.co.uk>
- * \date   June 2022
+ * @author Jason Hewitt <bowedyapper@live.co.uk>
+ * @date   June 2022
  *********************************************************************/
 
 class TextureObject {

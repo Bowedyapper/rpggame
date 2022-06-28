@@ -1,10 +1,10 @@
 /*****************************************************************//**
- * \file   keyHandler.h
- * \brief  Will be the main handler for key input once I work out
+ * @file   keyHandler.h
+ * @brief  Will be the main handler for key input once I work out
  * 		   the best way to handle movement
  * 
- * \author Jason Hewitt <bowedyapper@live.co.uk>
- * \date   June 2022
+ * @author Jason Hewitt <bowedyapper@live.co.uk>
+ * @date   June 2022
  *********************************************************************/
 
 namespace keys{

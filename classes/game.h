@@ -1,11 +1,11 @@
 /*****************************************************************//**
- * \file   game.h
- * \brief  Handles initialisation of SDL2, creates a window, renderer
+ * @file   game.h
+ * @brief  Handles initialisation of SDL2, creates a window, renderer
  * and handles many other game specific operations such as delta
  * fps calculation, texture handling and event handling.
  * 
- * \author Jason Hewitt <bowedyapper@live.co.uk>
- * \date   June 2022
+ * @author Jason Hewitt <bowedyapper@live.co.uk>
+ * @date   June 2022
  *********************************************************************/
 
 #include <assert.h>
@@ -16,10 +16,10 @@ private:
 	const char* windowTitle;
 
 	/**
-	 * \brief 
+	 * @brief 
 	 * 
-	 * \return true if init was successful
-	 * \return false if init threw and error
+	 * @return true if init was successful
+	 * @return false if init threw and error
 	 */
 	bool init();
 	bool createWindow(int width, int height);
@@ -70,8 +70,8 @@ public:
 };
 
 /**
- * \brief Initalises all the nessecary SDL libraries.
- * \returns True if successful.
+ * @brief Initalises all the nessecary SDL libraries.
+ * @returns True if successful.
  */
 bool Game::init() {
 #if EE_CURRENT_PLATFORM == EE_PLATFORM_WINDOWS
@@ -104,10 +104,10 @@ bool Game::init() {
 }
 
 /**
- * \brief Creates a window with a specified width and height.
- * \param width An integer specifiying the width of the window.
- * \param height An integer specifiying the height of the window.
- * \returns True if successful.
+ * @brief Creates a window with a specified width and height.
+ * @param width An integer specifiying the width of the window.
+ * @param height An integer specifiying the height of the window.
+ * @returns True if successful.
  */
 bool Game::createWindow(int width, int height) {
 	windowWidth = width;

@@ -1,12 +1,12 @@
 /*****************************************************************//**
- * \file   character.h
- * \brief  Creates a player object and stores current x, y coordinates
+ * @file   character.h
+ * @brief  Creates a player object and stores current x, y coordinates
  * 		   size, speed, texture and also handles player movement.
  * 		   This class is also used for rendering and positioning of
  * 		   remote players
  * 
- * \author Jason Hewitt <bowedyapper@live.co.uk>
- * \date   June 2022
+ * @author Jason Hewitt <bowedyapper@live.co.uk>
+ * @date   June 2022
  *********************************************************************/
 
 extern Game *game;

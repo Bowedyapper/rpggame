@@ -1,9 +1,9 @@
 ﻿/*****************************************************************//**
- * \file   main.cpp
- * \brief  Contains the main game logic and loop
+ * @file   main.cpp
+ * @brief  Contains the main game logic and loop
  * 
- * \author Jason Hewitt <bowedyapper@live.co.uk>
- * \date   June 2022
+ * @author Jason Hewitt <bowedyapper@live.co.uk>
+ * @date   June 2022
  *********************************************************************/
 
 #include "headers.h"
