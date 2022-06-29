@@ -17,7 +17,10 @@ extern Game* game;
 
 class Socket {
 public:
+	const char *currentHost;
 	int64_t latency = 0;
+	bool connected = false;
+	bool reconnecting = false;
 	std::chrono::steady_clock::time_point lastLatencyCheck = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point lastLatencyPacketSent = std::chrono::steady_clock::now();
 	std::chrono::steady_clock::time_point lastLatencyPacketRecieved = std::chrono::steady_clock::now();
@@ -27,12 +30,31 @@ public:
 	 * 
 	 * @param socketHost The host address to connect to
 	 */
-	Socket(const char* socketHost) {
+	Socket(const char *socketHost) {
+		currentHost = socketHost;
 		lastLatencyCheck = std::chrono::steady_clock::now();
-		client.connect(socketHost);
+		connect(socketHost);
+		
 		on("latency_response", [&](sio::event& ev) {
 			lastLatencyPacketRecieved = std::chrono::steady_clock::now();
 			latency = std::chrono::duration_cast<std::chrono::milliseconds>(lastLatencyPacketRecieved - lastLatencyPacketSent).count();
+		});
+
+		client.set_open_listener([&](){
+			utils::debugLog("info", "Connection to " + (std::string)currentHost + " was successful");
+			connected = true;
+			reconnecting = false;
+		});
+
+		client.set_fail_listener([&](){
+			std::cout << "Failed to connect to " << currentHost << std::endl;
+		});
+
+		client.set_reconnecting_listener([&](){
+			//std::cout << "RECONNECTION EVENT" << l << y << std::endl;
+			std::cout << "Attempting to reconnect to " << currentHost << std::endl;
+			connected = false;
+			reconnecting = true;
 		});
 	}
 
@@ -40,7 +62,7 @@ public:
 	 * @brief Event listener for events emitted from the server
 	 * 
 	 * @param eventName Case sensitive name of event
-	 * @param func Pointer to a callback function
+	 * @param func Pointer to a callback function or lambda
 	 */
 	void on(std::string eventName, const sio::socket::event_listener func);
 
@@ -49,7 +71,7 @@ public:
 	 * 
 	 * @param name Case sensitive name of event
 	 * @param msglist Optional list of input to be sent
-	 * @param ack Optional pointer to ack callback function
+	 * @param ack Optional pointer to ack callback function or lambda
 	 */
 	void emit(std::string const& name, sio::message::list const& msglist, std::function<void(sio::message::list const&)> const& ack);
 
@@ -67,16 +89,14 @@ private:
 	 * @brief Attempts to create a socket connection 
 	 * 
 	 * @param socketHost The host address to connect to
-	 * @return true if socket connection was successful
-	 * @return false if an error was thrown
 	 */
-	bool connect(const char* socketHost);
+	void connect(const char* socketHost);
 
 };
 
-bool Socket::connect(const char* socketHost) {
+void Socket::connect(const char* socketHost) {
 	client.connect(socketHost);
-	return true;
+	
 }
 
 void Socket::on(std::string eventName, const sio::socket::event_listener func) {

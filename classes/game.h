@@ -8,8 +8,6 @@
  * @date   June 2022
  *********************************************************************/
 
-#include <assert.h>
-#include <vector>
 class Game {
 private:
 	
@@ -65,8 +63,6 @@ public:
 
 	auto renderText(const char* fontFile, float fontSize, const char* text, SDL_Color colour);
 	int displayText(const char* fontFile, float fontSize, std::string text, float x, float y, SDL_Color colour);
-	auto getSystemTime();
-
 };
 
 /**
@@ -74,9 +70,8 @@ public:
  * @returns True if successful.
  */
 bool Game::init() {
-#if EE_CURRENT_PLATFORM == EE_PLATFORM_WINDOWS
-	
-	printf("Environment is windows, setting audio driver to Directsound\n");
+#ifdef _WIN32
+	utils::debugLog("info", "Environment is windows, setting audio driver to Directsound");
 	SDL_setenv("SDL_AUDIODRIVER", "directsound", true);
 #endif
 	bool ttfInit = TTF_Init();
@@ -85,19 +80,17 @@ bool Game::init() {
 	int flags = IMG_INIT_PNG;
 	int initted = IMG_Init(flags);
 	if ((initted & flags) != flags) {
-		printf("IMG_Init: Failed to init required png support!\n");
-		printf("IMG_Init: %s\n", IMG_GetError());
+		utils::debugLog("error", "Failed to init required png support: " + (std::string)IMG_GetError());
 		return false;
 	}
 
-	printf("Initalising SDL..");
+	utils::debugLog("info", "Initalising SDL..");
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0 && ttfInit != 0)
 	{
-		printf("error");
-		throw("Error initializing SDL: %s\n", SDL_GetError());
+		utils::debugLog("error" , "Error initializing SDL:" + (std::string)SDL_GetError());
 		return false;
 	}
-	printf("Success\n");
+	utils::debugLog("info", "Initalising SDL successful");
 
 	isRunning = true;
 	return true;
@@ -112,8 +105,7 @@ bool Game::init() {
 bool Game::createWindow(int width, int height) {
 	windowWidth = width;
 	windowHeight = height;
-	
-	printf("Creating %d x %d window..", width, height);
+	utils::debugLog("info", "Attempting to create window");
 	//SDL_SetHint(SDL_HINT_RENDER_DRIVER, "opengl"); // May need to be enabled for UNIX systems
 	window = SDL_CreateWindow(windowTitle,
 		SDL_WINDOWPOS_CENTERED_DISPLAY(1),
@@ -121,26 +113,25 @@ bool Game::createWindow(int width, int height) {
 		windowWidth, windowHeight, SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI);
 	if (!window)
 	{
-		printf("error");
-		throw("Error creating window: %s\n", SDL_GetError());
+		utils::debugLog("error", "Error creating window:" + (std::string)SDL_GetError());
 		return false;
 	}
-	std::cout << "Success" << std::endl;
+	utils::debugLog("info", std::to_string(windowWidth) + " x " + std::to_string(windowHeight) + " window created.");
 	return true;
 }
 
 bool Game::createRenderer() {
-	printf("Initialising renderer...");
+	utils::debugLog("info", "Initalising renderer");
 	/* Create a renderer */
 	Uint32 render_flags = SDL_RENDERER_ACCELERATED;
 	renderer = SDL_CreateRenderer(window, -1, render_flags);
 	if (!renderer)
 	{
-		throw("Error creating renderer: %s\n", SDL_GetError());
+		utils::debugLog("error", "Error creating renderer: " + (std::string)SDL_GetError());
 		SDL_DestroyWindow(window);
 		return false;
 	}
-	std::cout << "Success" << std::endl;
+	utils::debugLog("info", "Renderer created");
 	SDL_RenderSetLogicalSize(renderer, windowWidth, windowHeight);
 	return true;
 }
@@ -165,7 +156,7 @@ void Game::render() {
 	SDL_RenderPresent(renderer);
 }
 void Game::quit() {
-	std::cout << "Quitting game" << std::endl;
+	utils::debugLog("info", "Exiting game");
 	SDL_Quit();
 	isRunning = false;
 }
@@ -184,8 +175,7 @@ void Game::eventHandler(SDL_Event &event) {
 	}
 	switch (event.type) {
 		case SDL_QUIT:
-			printf("Game was closed");
-			isRunning = false;
+			quit();
 			break;
 
 		case SDL_WINDOWEVENT:
@@ -308,10 +298,4 @@ int Game::displayText(const char* fontFile, float fontSize, std::string text, fl
 
 }
 
-auto Game::getSystemTime(){
-	auto cur_time = std::chrono::system_clock::now();
-	std::cout << "TIME: " << std::chrono::system_clock::to_time_t(cur_time) << std::endl;
-	auto unixtime = cur_time.time_since_epoch();
-	auto unixtime_in_s = std::chrono::duration_cast<std::chrono::seconds>(unixtime);
-	return unixtime_in_s.count();
-}
+

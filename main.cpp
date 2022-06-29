@@ -126,7 +126,7 @@ void drawRemotePlayers() {
 
 void onConnection(sio::event& evnt) {
 	std::string user = evnt.get_message()->get_map()["user"]->get_string();
-	printf("Client %s connected\n", user.c_str());
+	utils::debugLog("info", "Player connected with socket id: " + (std::string)user);
 	currentUserSocketId = user;
 	Character player(user);
 	playerVector.push_back(player);
