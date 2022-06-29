@@ -20,7 +20,7 @@
 #include <SDL_image.h>
 #include <SDL_ttf.h>
 #include "include/utils.h"
-#include "colours.cpp"
+#include "include/colours.h"
 #include "include/audio.h"
 #include "include/audio.c"
 #include "classes/texture.h"
