@@ -8,6 +8,7 @@ endif()
 project(RPGGame)
 
 add_executable(${PROJECT_NAME} "main.cpp")
+target_compile_options(${PROJECT_NAME} PRIVATE -O3)
 
 IF (WIN32)
     # Need to manually set a path for each library for Windows at the moment until I can create a script that finds it automatically
