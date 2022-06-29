@@ -17,7 +17,7 @@ Install required dependencies (Linux)
 Install required dependencies (Mac)
 > ```brew install cmake make SDL2 SDL2_image SDL2_ttf```
 
-Navigate to the include/socket.io-client folder and run
+Navigate to the cmake/socket.io-client folder and run
 > ```cmake .```
 
 Once finished run
