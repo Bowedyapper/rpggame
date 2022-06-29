@@ -1,4 +1,3 @@
 out/
-socket.io-client-cpp
 .vscode/
 build/

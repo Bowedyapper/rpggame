@@ -16,7 +16,7 @@ IF (WIN32)
     set(SDL2_IMAGE_PATH "G:/cpp_libs/SDL2_image-2.0.5" CACHE BOOL "" FORCE)
     set(sioclient_DIR "G:/cpp_libs/sioclient_debug" CACHE BOOL "" FORCE)
     
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/include/sdl2-cmake-modules)
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2-cmake-modules)
 
     # Add socketio Library
     find_package(sioclient REQUIRED)

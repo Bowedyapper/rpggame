@@ -1,6 +1,6 @@
-[submodule "include/socket.io-client"]
-	path = include/socket.io-client
+[submodule "cmake/socket.io-client-cpp"]
+	path = cmake/socket.io-client-cpp
 	url = https://github.com/socketio/socket.io-client-cpp.git
-[submodule "include/sdl2-cmake-modules"]
-	path = include/sdl2-cmake-modules
-	url = https://gitlab.com/aminosbh/sdl2-cmake-modules.git
+[submodule "cmake/sdl2-cmake-modules"]
+	path = cmake/sdl2-cmake-modules
+	url = https://github.com/aminosbh/sdl2-cmake-modules.git
