@@ -26,6 +26,7 @@ private:
 public:
 	bool isRunning = true;
 	bool chatOpen = false;
+	bool detachedCamera = false;
 	double delta = 0;
 
 	int mousePosX;
@@ -66,7 +67,7 @@ public:
 };
 
 /**
- * @brief Initalises all the nessecary SDL libraries.
+ * @brief Initialises all the necessary SDL libraries.
  * @returns True if successful.
  */
 bool Game::init() {
@@ -84,13 +85,13 @@ bool Game::init() {
 		return false;
 	}
 
-	utils::debugLog("info", "Initalising SDL..");
+	utils::debugLog("info", "Initialising SDL..");
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0 && ttfInit != 0)
 	{
 		utils::debugLog("error" , "Error initializing SDL:" + (std::string)SDL_GetError());
 		return false;
 	}
-	utils::debugLog("info", "Initalising SDL successful");
+	utils::debugLog("info", "Initialising SDL successful");
 
 	isRunning = true;
 	return true;
@@ -98,8 +99,8 @@ bool Game::init() {
 
 /**
  * @brief Creates a window with a specified width and height.
- * @param width An integer specifiying the width of the window.
- * @param height An integer specifiying the height of the window.
+ * @param width An integer specifying the width of the window.
+ * @param height An integer specifying the height of the window.
  * @returns True if successful.
  */
 bool Game::createWindow(int width, int height) {
@@ -121,7 +122,7 @@ bool Game::createWindow(int width, int height) {
 }
 
 bool Game::createRenderer() {
-	utils::debugLog("info", "Initalising renderer");
+	utils::debugLog("info", "Initialising renderer");
 	/* Create a renderer */
 	Uint32 render_flags = SDL_RENDERER_ACCELERATED;
 	renderer = SDL_CreateRenderer(window, -1, render_flags);
@@ -163,6 +164,12 @@ void Game::quit() {
 
 void Game::eventHandler(SDL_Event &event) {
 	if (event.type == SDL_KEYDOWN) {
+		switch (event.key.keysym.scancode) {
+				case SDL_SCANCODE_2:
+					detachedCamera = !detachedCamera;
+					utils::debugLog("info", (detachedCamera) ? "Detached camera" : "Reattached camera");
+					break;
+			}
 		if (event.key.keysym.scancode){
 			//keys::handleKeyDown(event.key.keysym.scancode);
 		}
@@ -185,7 +192,9 @@ void Game::eventHandler(SDL_Event &event) {
 				resizeWindow(event.window.data1, event.window.data2);
 				break;
 			}
+
 			
+
 			//switch (event.key.keysym.scancode) {
 			//	
 			//	case SDL_SCANCODE_F:
@@ -255,7 +264,7 @@ int Game::clipRenderTexture(SDL_Texture* texture, float w, float h, float x, flo
 		textureRect.w = w;
 		textureRect.h = h;
 	}
-	return SDL_RenderCopyExF(renderer, texture, clip, &textureRect, NULL, NULL, SDL_FLIP_NONE);
+	return SDL_RenderCopyExF(renderer, texture, clip, &textureRect, 0.0, NULL, SDL_FLIP_NONE);
 }
 
 auto Game::renderText(const char* fontFile, float fontSize, const char* text, SDL_Color colour) {
