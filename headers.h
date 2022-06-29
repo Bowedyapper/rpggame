@@ -26,5 +26,5 @@
 #include "classes/texture.h"
 #include "classes/game.h"
 #include "classes/keyHandler.h"
-#include "classes/character.h"
 #include "classes/socket.h"
+#include "classes/character.h"
