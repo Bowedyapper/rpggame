@@ -4,6 +4,7 @@
  * 
  * @author Jason Hewitt <bowedyapper@live.co.uk>
  * @date   June 2022
+ * 
  *********************************************************************/
 
 #include "headers.h"
@@ -15,60 +16,59 @@ std::string currentUserSocketId;
 
 std::chrono::steady_clock::time_point lastFpsUpdate = std::chrono::steady_clock::now();
 double currentCalculatedFrameRate = 0;
-double gameFrameRate = 60.00;
+double gameFrameRate = 140.00;
 extern const int levelWidth = 4320;
 extern const int levelHeight = 3360;
 auto keystates = SDL_GetKeyboardState(NULL);
 
-Game* game = new Game(1280, 720, "RPGGame"); // Create game (creates window and renderer);
-
+Game *game = new Game(1280, 720, "RPGGame"); // Create game (creates window and renderer);
 Character* player = new Character("player", NULL, 1064, 1534);
 
-
-void movementHandler(Socket* socket) {
-
+void movementHandler() {
+	player->isMoving = false;
 	if (/*keystates[SDL_SCANCODE_LEFT] || */ keystates[SDL_SCANCODE_A]) {
-
 		if (player->move("left")) {
+			player->isMoving = true;
 			sio::message::list move("l");
 			move.push(sio::double_message::create(game->delta));
 			move.push(sio::int_message::create(player->rect.x));
 			//move.push(sio::int_message::create(ms));
-			socket->emit("move", move);
+			Socket::emit("move", move);
 		}
 	}
 
 	if (/*keystates[SDL_SCANCODE_RIGHT] ||*/ keystates[SDL_SCANCODE_D]) {
-
 		if (player->move("right")) {
+			player->isMoving = true;
 			sio::message::list move("r");
 			move.push(sio::double_message::create(game->delta));
 			move.push(sio::int_message::create(player->rect.x));
 			//move.push(sio::int_message::create(ms));
-			socket->emit("move", move);
+			Socket::emit("move", move);
 		}
 
 	}
 
 	if (/*keystates[SDL_SCANCODE_UP] ||*/ keystates[SDL_SCANCODE_W]) {
-
 		if (player->move("up")) {
+			player->isMoving = true;
 			sio::message::list move("u");
 			move.push(sio::double_message::create(game->delta));
 			move.push(sio::int_message::create(player->rect.y));
 			//move.push(sio::int_message::create(ms));
-			socket->emit("move", move);
+			Socket::emit("move", move);
 		}
 	}
 
 	if (/*keystates[SDL_SCANCODE_DOWN] ||*/ keystates[SDL_SCANCODE_S]) {
-
+		
 		if (player->move("down")) {
+			player->isMoving = true;
 			sio::message::list move("d");
 			move.push(sio::double_message::create(game->delta));
 			move.push(sio::int_message::create(player->rect.y));
 			//move.push(sio::int_message::create(ms));
-			socket->emit("move", move);
+			Socket::emit("move", move);
 		}
 	}
 
@@ -120,7 +120,6 @@ void gameChunkUpdate(sio::event& evnt) {
 void drawRemotePlayers() {
 	for (int ii = 0; ii < playerVector.size(); ii++) {
 		if (playerVector[ii].socketid != currentUserSocketId) {
-			std::cout << playerVector[ii].rect.x << " " << playerVector[ii].rect.x << std::endl;
 			playerVector[ii].pos(playerVector[ii].x, playerVector[ii].y);
 			playerVector[ii].drawRemote(player->camera);
 		}
@@ -129,7 +128,7 @@ void drawRemotePlayers() {
 
 void onConnection(sio::event& evnt) {
 	std::string user = evnt.get_message()->get_map()["user"]->get_string();
-	utils::debugLog("info", "Player connected with socket id: " + (std::string)user);
+	utils::debugLog("info", "Player connected with socket id: " + user);
 	currentUserSocketId = user;
 	Character player(user);
 	playerVector.push_back(player);
@@ -145,17 +144,38 @@ void handleUserDisconnect(sio::event& evnt) {
 }
 
 bool loadTextures() {
-	game->mainTextures.loadTexture("player", "./assets/textures/scot.png");
 	game->mainTextures.loadTexture("map", "./assets/textures/map.png");
 
+	game->mainTextures.loadTexture("playerRightWalk", "./assets/textures/CharWalkRight.png");
+	game->mainTextures.loadTexture("playerLeftWalk", "./assets/textures/CharWalkLeft.png");
+	game->mainTextures.loadTexture("playerUpWalk", "./assets/textures/CharWalkUp.png");
+	game->mainTextures.loadTexture("playerDownWalk", "./assets/textures/CharWalkDown.png");
+
 	return true;
+}
+
+void anim(TextureObject textureObject, int x, int y, int w, int h, int speed, int frames, SDL_FRect dstr) {
+	int frameWidth = textureObject.width / frames;
+	Uint32 ticks = SDL_GetTicks();
+	Uint32 seconds = ticks / speed;
+	int spriteX = seconds % frames;
+	SDL_Rect srcr = {spriteX * frameWidth, 0, frameWidth, textureObject.height};
+	//SDL_Rect dstr = {x, y, w, h};
+	SDL_RenderCopyF(game->renderer, textureObject.texture, &srcr, &dstr);
+}
+
+void extractFrame(TextureObject textureObject, int x, int y, int w, int h, int frame, SDL_FRect dstr) {
+	int frameWidth = textureObject.width / frame;
+	SDL_Rect srcr = {0, 0, 24, textureObject.height};
+	//SDL_Rect dstr = {x, y, w, h};
+	SDL_RenderCopyF(game->renderer, textureObject.texture, &srcr, &dstr);
 }
 
 
 int main(int argc, char* argv[]) {
 	// TODO: Need to figure out why this will not work correctly in the init function within the game class
-	//SDL_Init(SDL_INIT_AUDIO);
-	//initAudio();
+	SDL_Init(SDL_INIT_AUDIO);
+	initAudio();
 
 	// Load the game textures, will be separated per scene so we only load what is needed
 	bool load = loadTextures();
@@ -164,24 +184,31 @@ int main(int argc, char* argv[]) {
 	}
 
 	// Get textures from VRAM and give pointers
-	TextureObject charTexture = game->mainTextures.getTexture("player");
 	TextureObject mapT = game->mainTextures.getTexture("map");
 
+	TextureObject charWalkRight = game->mainTextures.getTexture("playerRightWalk");
+	TextureObject charWalkLeft = game->mainTextures.getTexture("playerLeftWalk");
+	TextureObject charWalkUp = game->mainTextures.getTexture("playerUpWalk");
+	TextureObject charWalkDown = game->mainTextures.getTexture("playerDownWalk");
+
+	TextureObject currentPlayerTexture = charWalkRight;
 	SDL_Rect textureRect = { 0,0, mapT.width, mapT.height }; // Rect used for world map (will hopefully be tilemaps later
 
-	player->applyTexture(charTexture.texture); // Copy texture to player rect
 
-	//playMusic("assets/audio/audio.wav", 5);
+	playMusic("assets/audio/forest.wav", 10);
 
 
 	// Socket connection-y stuff
-	Socket socket("http://178.128.38.39:4545"); // Connects to server
-	socket.emit("user_wants_connection"); // Tell server we want to connect
 
-	socket.on("user_got_connected", &onConnection); // Handle connection success
-	socket.on("game_chunk_update", &gameChunkUpdate); // Handle game chunk updates
-	socket.on("user_disconnect", &handleUserDisconnect); // Handle remote user DC's
+	Socket::connect("http://rpg.json.scot"); // Connects to server
+	Socket::emit("user_wants_connection"); // Tell server we want to connect
 
+	Socket::on("user_got_connected", &onConnection); // Handle connection success
+	Socket::on("game_chunk_update", &gameChunkUpdate); // Handle game chunk updates
+	Socket::on("user_disconnect", &handleUserDisconnect); // Handle remote user DC's
+
+
+	
 	// Main game loop
 	unsigned int a;
 	unsigned int b = SDL_GetTicks();
@@ -203,8 +230,8 @@ int main(int argc, char* argv[]) {
 				currentCalculatedFrameRate = game->calcFps();
 			}
 
-			socket.checkLatency(5000);
-			movementHandler(&socket);
+			Socket::checkLatency(5000);
+			movementHandler();
 			
 			
 			game->clearScreen(); // clear whole screen
@@ -232,7 +259,7 @@ int main(int argc, char* argv[]) {
 				player->camera.y = levelHeight - player->camera.h;
 			}
 
-			game->clipRenderTexture(mapT.texture, 0.0, NULL, 0, 0, &player->camera);
+			game->clipRenderTexture(mapT.texture, 0.0, 0, 0, 0, &player->camera);
 
 			drawRemotePlayers();
 			player->draw();
@@ -241,19 +268,49 @@ int main(int argc, char* argv[]) {
 			std::string charPos = "Character Position - X: " + std::to_string((int)player->x) + " Y: " + std::to_string((int)player->y);
 			std::string camPos = "Camera Position - X: " + std::to_string(player->camera.x) + " Y: " + std::to_string(player->camera.y);
 			std::string fpsText = "FPS: " + std::to_string((int)currentCalculatedFrameRate);
-			std::string chatOpenText = "ChatOpen: " + std::to_string(game->chatOpen);
-			std::string latencyText = "Latency: " + std::to_string(socket.latency) + "ms";
+			std::string latencyText = "Latency: " + std::to_string(Socket::latency) + "ms";
 
 			const char *font = "assets/font/font.ttf";
 			game->displayText(font, (float)game->windowHeight * 0.02f, charPos, 1, 15, darker_gray);
 			game->displayText(font, (float)game->windowHeight * 0.02f, mousePos, 1, 1, darker_gray);
 			game->displayText(font, (float)game->windowHeight * 0.02f, camPos, 1, 30, darker_gray);
 			game->displayText(font, (float)game->windowHeight * 0.02f, fpsText, 1, 45, darker_gray);
-			game->displayText(font, (float)game->windowHeight * 0.02f, chatOpenText, 1, 60, darker_gray);
-			game->displayText(font, (float)game->windowHeight * 0.02f, latencyText, 1, 75, darker_gray);
+			game->displayText(font, (float)game->windowHeight * 0.02f, latencyText, 1, 60, darker_gray);
 
+
+			// Uint32 ticks = SDL_GetTicks();
+			// Uint32 seconds= ticks / 50;
+			// int spriteX = seconds % 4;
+			
+			// SDL_Rect srcr = {spriteX *24 ,0, 25,20};
+			// SDL_Rect dstr = {game->windowWidth/2, game->windowHeight/2, 70, 70};
+			// SDL_RenderCopy(game->renderer, charWalkRight.texture, &srcr, &dstr);
+
+			
+			//void anim(TextureObject textureObject, int x, int y, int w, int h, int speed, int frames, int frameOffset) 
+
+			
+			if(player->facingDirection == "r"){
+				currentPlayerTexture = charWalkRight;
+			}
+			if(player->facingDirection == "l"){
+				currentPlayerTexture = charWalkLeft;
+			}
+			if(player->facingDirection == "u"){
+				currentPlayerTexture = charWalkUp;
+			}
+			if(player->facingDirection == "d"){
+				currentPlayerTexture = charWalkDown;
+			}
+			if(player->isMoving){
+				anim(currentPlayerTexture, game->windowWidth/2, game->windowHeight/2, 200, 200, 150, 4, player->rect);
+			} else {
+				extractFrame(currentPlayerTexture, game->windowWidth / 2, game->windowHeight / 2, 100, 200, 1, player->rect);
+			}
 			game->render(); // present everything to the renderer
 		}
 	}
 	return 0;
 }
+
+

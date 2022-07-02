@@ -7,7 +7,6 @@
  * @author Jason Hewitt <bowedyapper@live.co.uk>
  * @date   June 2022
  *********************************************************************/
-
 class Game {
 private:
 	
@@ -29,6 +28,11 @@ public:
 	bool detachedCamera = false;
 	double delta = 0;
 
+
+int texX = 0;
+	int texY = 0;
+
+	
 	int mousePosX;
 	int mousePosY;
 	int windowWidth;
@@ -75,6 +79,7 @@ bool Game::init() {
 	utils::debugLog("info", "Environment is windows, setting audio driver to Directsound");
 	SDL_setenv("SDL_AUDIODRIVER", "directsound", true);
 #endif
+
 	bool ttfInit = TTF_Init();
 
 	// load support for the JPG and PNG image formats
@@ -168,6 +173,19 @@ void Game::eventHandler(SDL_Event &event) {
 				case SDL_SCANCODE_2:
 					detachedCamera = !detachedCamera;
 					utils::debugLog("info", (detachedCamera) ? "Detached camera" : "Reattached camera");
+					break;
+
+				case SDL_SCANCODE_RETURN:
+					chatOpen = true;
+					SDL_StartTextInput();
+					break;
+
+				case SDL_SCANCODE_KP_PLUS:
+					texX +=1;
+					break;
+
+				case SDL_SCANCODE_ESCAPE:
+					chatOpen = false;
 					break;
 			}
 		if (event.key.keysym.scancode){
