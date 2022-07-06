@@ -13,8 +13,10 @@
 #include <chrono>
 #include <future>
 #include <map>
+#include <random>
 #include <future>
 #include <assert.h>
+#include <cassert>
 #include <vector>
 #include <SDL.h>
 #include <SDL_image.h>
@@ -25,6 +27,11 @@
 #include "include/audio.c"
 #include "include/socket.h"
 #include "classes/texture.h"
-#include "classes/game.h"
-#include "classes/keyHandler.h"
-#include "classes/character.h"
+//#include "classes/game.h"
+#include "include/gameNS.h"
+//#include "classes/entity.h"
+//#include "classes/camera.h"
+//#include "classes/playableCharacter.h"
+//#include "classes/NPC.h"
+//#include "classes/keyHandler.h"
+//#include "classes/character.h"

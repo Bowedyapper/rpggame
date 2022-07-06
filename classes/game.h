@@ -210,42 +210,6 @@ void Game::eventHandler(SDL_Event &event) {
 				resizeWindow(event.window.data1, event.window.data2);
 				break;
 			}
-
-			
-
-			//switch (event.key.keysym.scancode) {
-			//	
-			//	case SDL_SCANCODE_F:
-			//		/*if (currentFpsSelection == 9) {
-			//			currentFpsSelection = 0;
-			//		}
-			//		else {
-			//			currentFpsSelection += 1;
-			//		}
-			//		FPS = (float)fpsArray[currentFpsSelection];*/
-			//		//std::cout << "FPS changed to " << FPS << std::endl;
-			//		break;
-
-			//	case SDL_SCANCODE_C:
-			//		//player.changeColour();
-			//		break;
-
-			//	case SDL_SCANCODE_R:
-			//		//player.x = 0;
-			//		//player.y = 0;
-			//		//printf("Position reset");
-			//		break;
-
-			//	case SDL_SCANCODE_RETURN:
-			//		chatOpen = true;
-			//		break;
-
-			//	case SDL_SCANCODE_ESCAPE:
-			//		
-			//		break;
-			//			
-			
-		//}
 	}
 }
 
