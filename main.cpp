@@ -11,7 +11,7 @@
 
 typedef std::vector<Character>::iterator characterVectorIterator;
 std::vector<Character> playerVector;
-std::vector<sio::message::ptr> playerChunk;
+//std::vector<//sio::message::ptr> playerChunk;
 std::string currentUserSocketId;
 
 std::chrono::steady_clock::time_point lastFpsUpdate = std::chrono::steady_clock::now();
@@ -29,22 +29,22 @@ void movementHandler() {
 	if (/*keystates[SDL_SCANCODE_LEFT] || */ keystates[SDL_SCANCODE_A]) {
 		if (player->move("left")) {
 			player->isMoving = true;
-			sio::message::list move("l");
-			move.push(sio::double_message::create(game->delta));
-			move.push(sio::int_message::create(player->rect.x));
-			//move.push(sio::int_message::create(ms));
-			Socket::emit("move", move);
+			//sio::message::list move("l");
+			//move.push(//sio::double_message::create(game->delta));
+			//move.push(//sio::int_message::create(player->rect.x));
+			////move.push(//sio::int_message::create(ms));
+			//Socket::emit("move", move);
 		}
 	}
 
 	if (/*keystates[SDL_SCANCODE_RIGHT] ||*/ keystates[SDL_SCANCODE_D]) {
 		if (player->move("right")) {
 			player->isMoving = true;
-			sio::message::list move("r");
-			move.push(sio::double_message::create(game->delta));
-			move.push(sio::int_message::create(player->rect.x));
-			//move.push(sio::int_message::create(ms));
-			Socket::emit("move", move);
+			//sio::message::list move("r");
+			//move.push(//sio::double_message::create(game->delta));
+			//move.push(//sio::int_message::create(player->rect.x));
+			////move.push(//sio::int_message::create(ms));
+			//Socket::emit("move", move);
 		}
 
 	}
@@ -52,11 +52,11 @@ void movementHandler() {
 	if (/*keystates[SDL_SCANCODE_UP] ||*/ keystates[SDL_SCANCODE_W]) {
 		if (player->move("up")) {
 			player->isMoving = true;
-			sio::message::list move("u");
-			move.push(sio::double_message::create(game->delta));
-			move.push(sio::int_message::create(player->rect.y));
-			//move.push(sio::int_message::create(ms));
-			Socket::emit("move", move);
+			//sio::message::list move("u");
+			//move.push(//sio::double_message::create(game->delta));
+			//move.push(//sio::int_message::create(player->rect.y));
+			////move.push(//sio::int_message::create(ms));
+			//Socket::emit("move", move);
 		}
 	}
 
@@ -64,18 +64,18 @@ void movementHandler() {
 		
 		if (player->move("down")) {
 			player->isMoving = true;
-			sio::message::list move("d");
-			move.push(sio::double_message::create(game->delta));
-			move.push(sio::int_message::create(player->rect.y));
-			//move.push(sio::int_message::create(ms));
-			Socket::emit("move", move);
+			//sio::message::list move("d");
+			//move.push(//sio::double_message::create(game->delta));
+			//move.push(//sio::int_message::create(player->rect.y));
+			////move.push(//sio::int_message::create(ms));
+			//Socket::emit("move", move);
 		}
 	}
 
 
 	if(game->detachedCamera){
 		//Camera movement (Arrow keys)
-		int calc = std::round((game->delta / 256) * 50);
+		int calc = roundl((game->delta / 256) * 50);
 		if (keystates[SDL_SCANCODE_UP]) {
 			player->camera.y -= calc;
 
@@ -95,27 +95,27 @@ void movementHandler() {
 	}
 }
 
-void gameChunkUpdate(sio::event& evnt) {
-	size_t playerChunkSize = evnt.get_message()->get_vector().size();
-	playerChunk = evnt.get_message()->get_vector();
+// void gameChunkUpdate(//sio::event& evnt) {
+// 	size_t playerChunkSize = evnt.get_message()->get_vector().size();
+// 	playerChunk = evnt.get_message()->get_vector();
 
-	for (int ii = 0; ii < playerChunkSize; ii++) {
-		std::string user = evnt.get_message()->get_vector()[ii]->get_map()["socketid"]->get_string();
-		float x = (float)evnt.get_message()->get_vector()[ii]->get_map()["x"]->get_double();
-		float y = (float)evnt.get_message()->get_vector()[ii]->get_map()["y"]->get_double();
+// 	for (int ii = 0; ii < playerChunkSize; ii++) {
+// 		std::string user = evnt.get_message()->get_vector()[ii]->get_map()["socketid"]->get_string();
+// 		float x = (float)evnt.get_message()->get_vector()[ii]->get_map()["x"]->get_double();
+// 		float y = (float)evnt.get_message()->get_vector()[ii]->get_map()["y"]->get_double();
 
-		if (user != currentUserSocketId) {
-			characterVectorIterator findUser = find_if(playerVector.begin(), playerVector.end(), [&user](const Character obj) {return obj.socketid == user; });
-			if (findUser != playerVector.end()) {
-				findUser->pos(x, y);
-			}
-			else {
-				Character newPlayer(user, player->charTexture);
-				playerVector.push_back(newPlayer);
-			}
-		}
-	}
-}
+// 		if (user != currentUserSocketId) {
+// 			characterVectorIterator findUser = find_if(playerVector.begin(), playerVector.end(), [&user](const Character obj) {return obj.socketid == user; });
+// 			if (findUser != playerVector.end()) {
+// 				findUser->pos(x, y);
+// 			}
+// 			else {
+// 				Character newPlayer(user, player->charTexture);
+// 				playerVector.push_back(newPlayer);
+// 			}
+// 		}
+// 	}
+// }
 
 void drawRemotePlayers() {
 	for (int ii = 0; ii < playerVector.size(); ii++) {
@@ -126,22 +126,22 @@ void drawRemotePlayers() {
 	}
 }
 
-void onConnection(sio::event& evnt) {
-	std::string user = evnt.get_message()->get_map()["user"]->get_string();
-	utils::debugLog("info", "Player connected with socket id: " + user);
-	currentUserSocketId = user;
-	Character player(user);
-	playerVector.push_back(player);
-}
+// void onConnection(sio::event& evnt) {
+// 	std::string user = evnt.get_message()->get_map()["user"]->get_string();
+// 	utils::debugLog("info", "Player connected with socket id: " + user);
+// 	currentUserSocketId = user;
+// 	Character player(user);
+// 	playerVector.push_back(player);
+// }
 
-void handleUserDisconnect(sio::event& evnt) {
-	std::string user = evnt.get_message()->get_string();
-	auto it = find_if(playerVector.begin(), playerVector.end(), [&user](const Character obj) {return obj.socketid == user; });
-	if (it != playerVector.end()) {
-		auto index = std::distance(playerVector.begin(), it);
-		playerVector.erase(playerVector.begin() + index);
-	}
-}
+// void handleUserDisconnect(sio::event& evnt) {
+// 	std::string user = evnt.get_message()->get_string();
+// 	auto it = find_if(playerVector.begin(), playerVector.end(), [&user](const Character obj) {return obj.socketid == user; });
+// 	if (it != playerVector.end()) {
+// 		auto index = std::distance(playerVector.begin(), it);
+// 		playerVector.erase(playerVector.begin() + index);
+// 	}
+// }
 
 bool loadTextures() {
 	game->mainTextures.loadTexture("map", "./assets/textures/map.png");
@@ -200,12 +200,12 @@ int main(int argc, char* argv[]) {
 
 	// Socket connection-y stuff
 
-	Socket::connect("http://rpg.json.scot"); // Connects to server
-	Socket::emit("user_wants_connection"); // Tell server we want to connect
+	//Socket::connect("http://rpg.json.scot"); // Connects to server
+	//Socket::emit("user_wants_connection"); // Tell server we want to connect
 
-	Socket::on("user_got_connected", &onConnection); // Handle connection success
-	Socket::on("game_chunk_update", &gameChunkUpdate); // Handle game chunk updates
-	Socket::on("user_disconnect", &handleUserDisconnect); // Handle remote user DC's
+	//Socket::on("user_got_connected", &onConnection); // Handle connection success
+	//Socket::on("game_chunk_update", &gameChunkUpdate); // Handle game chunk updates
+	//Socket::on("user_disconnect", &handleUserDisconnect); // Handle remote user DC's
 
 
 	
@@ -230,7 +230,7 @@ int main(int argc, char* argv[]) {
 				currentCalculatedFrameRate = game->calcFps();
 			}
 
-			Socket::checkLatency(5000);
+			//Socket::checkLatency(5000);
 			movementHandler();
 			
 			
@@ -268,7 +268,7 @@ int main(int argc, char* argv[]) {
 			std::string charPos = "Character Position - X: " + std::to_string((int)player->x) + " Y: " + std::to_string((int)player->y);
 			std::string camPos = "Camera Position - X: " + std::to_string(player->camera.x) + " Y: " + std::to_string(player->camera.y);
 			std::string fpsText = "FPS: " + std::to_string((int)currentCalculatedFrameRate);
-			std::string latencyText = "Latency: " + std::to_string(Socket::latency) + "ms";
+			std::string latencyText = "Latency: " + std::to_string(/*//Socket::latency*/0) + "ms";
 
 			const char *font = "assets/font/font.ttf";
 			game->displayText(font, (float)game->windowHeight * 0.02f, charPos, 1, 15, darker_gray);
@@ -290,18 +290,18 @@ int main(int argc, char* argv[]) {
 			//void anim(TextureObject textureObject, int x, int y, int w, int h, int speed, int frames, int frameOffset) 
 
 			
-			if(player->facingDirection == "r"){
-				currentPlayerTexture = charWalkRight;
-			}
-			if(player->facingDirection == "l"){
-				currentPlayerTexture = charWalkLeft;
-			}
-			if(player->facingDirection == "u"){
-				currentPlayerTexture = charWalkUp;
-			}
-			if(player->facingDirection == "d"){
-				currentPlayerTexture = charWalkDown;
-			}
+			// if(player->facingDirection == "r"){
+			// 	currentPlayerTexture = charWalkRight;
+			// }
+			// if(player->facingDirection == "l"){
+			// 	currentPlayerTexture = charWalkLeft;
+			// }
+			// if(player->facingDirection == "u"){
+			// 	currentPlayerTexture = charWalkUp;
+			// }
+			// if(player->facingDirection == "d"){
+			// 	currentPlayerTexture = charWalkDown;
+			// }
 			if(player->isMoving){
 				anim(currentPlayerTexture, game->windowWidth/2, game->windowHeight/2, 200, 200, 150, 4, player->rect);
 			} else {

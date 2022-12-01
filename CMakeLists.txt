@@ -26,7 +26,7 @@ ELSE()
     # Add socketio Library
     target_include_directories(${PROJECT_NAME} PRIVATE /usr/local/include/)
     find_library(sioclient NAMES libsioclient.a PATHS /usr/local/lib/)
-    target_link_libraries(${PROJECT_NAME} sioclient)
+    target_link_libraries(${PROJECT_NAME} ${SIOCLIENT_LIBRARIES})
 ENDIF()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")

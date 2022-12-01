@@ -18,7 +18,7 @@ public:
 	float size = 50;
 	float x;
 	float y;
-
+	bool isMoving;
 	float delta;
 
 	SDL_Renderer* renderer;
@@ -85,7 +85,7 @@ void Character::pos(float xPos, float yPos) {
 }
 
 bool Character::move(std::string direction) {
-	float calc = (float)std::round((game->delta / 256) * SPEED);
+	float calc = (float)roundl((game->delta / 256) * SPEED);
 
 	//If the player went too far to the left or right
 	if ((x < 0) || (x + size > 6336))
